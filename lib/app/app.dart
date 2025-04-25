@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:whatsapp_clone/app/life_cycle_aware_app.dart';
-import 'package:whatsapp_clone/features/calls/providers/call_provider.dart';
 import 'package:whatsapp_clone/features/chat/provider/chat_provider.dart';
 import 'package:whatsapp_clone/providers/contact_provider.dart';
 import 'package:whatsapp_clone/providers/media_state_provider.dart';
@@ -27,9 +26,9 @@ class WhatsAppCloneApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => MediaController(),
         ),
-        // ChangeNotifierProvider(
-        //   create: (_) => CallProvider(),
-        // ),
+        ChangeNotifierProvider(
+          create: (_) => WebrtcProvider(),
+        ),
         ChangeNotifierProvider(
           create: (_) => WebrtcProvider(),
         ),

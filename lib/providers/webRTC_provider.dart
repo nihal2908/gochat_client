@@ -1,23 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:whatsapp_clone/features/calls/incoming_call_page.dart';
+import 'package:whatsapp_clone/features/calls/outgoing_call_page.dart';
+import 'package:whatsapp_clone/models/user.dart';
 
 class WebrtcProvider with ChangeNotifier {
   bool isInOngoingCall = false;
   bool isMute = false;
   bool isSpeaker = false;
   bool isIncomingCall = false;
+  bool videoCall = false;
+  User? callerUser;
+  User? receiverUser;
+
+  late final BuildContext context;
+
   bool get isInCall => isInOngoingCall;
+  bool get isVideoCall => videoCall;
+  bool get caller => callerUser != null;
+  bool get receiver => receiverUser != null;
+
+  void initialize(BuildContext context) {
+    context = context;
+  }
 
   void handleIncomingCall() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const IncomingCallPage(),
+      ),
+    );
     isIncomingCall = true;
     notifyListeners();
   }
 
   void handleOutgoingCall() {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => const OutgoingCallPage(),
+    //   ),
+    // );
     isIncomingCall = false;
     notifyListeners();
   }
 
-  void endCall() {
+  Future<void> endCall() async {
     isInOngoingCall = false;
     notifyListeners();
   }
@@ -37,7 +65,7 @@ class WebrtcProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void acceptCall() {
+  Future<void> acceptCall() async {
     isIncomingCall = false;
     isInOngoingCall = true;
     notifyListeners();
