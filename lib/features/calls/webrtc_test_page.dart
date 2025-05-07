@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
+import 'package:whatsapp_clone/models/user.dart';
 
 class WebRTCTestPage extends StatefulWidget {
   final String remoteUserId;
@@ -81,7 +82,8 @@ class WebRTCTestPage extends StatefulWidget {
     _ws.sink.add(jsonEncode(signal));
   }
 
-  static Future<void> handleOffer(Map<String, dynamic> data) async {
+  static Future<void> handleOffer(Map<String, dynamic> data, User caller) async {
+    print('this called');
     await initWebRTC(
       localUserId: data['sender_id'],
       remoteUserId: data['receiver_id'],
@@ -89,17 +91,21 @@ class WebRTCTestPage extends StatefulWidget {
       remoteRenderer: _remoteRenderer,
       ws: _ws,
     );
+    print('this called');
 
     final offer = RTCSessionDescription(data['sdp'], data['type']);
+    print('this called');
     await _peerConnection.setRemoteDescription(offer);
-
+    print('this called');
     final answer = await _peerConnection.createAnswer();
+    print('this called');
     await _peerConnection.setLocalDescription(answer);
-
+    print('this called');
     _sendSignal('webrtc_answer', {
       'sdp': answer.sdp,
       'type': answer.type,
     });
+    print('this called');
   }
 
   static Future<void> handleAnswer(Map<String, dynamic> data) async {

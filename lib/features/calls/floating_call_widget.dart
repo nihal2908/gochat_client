@@ -14,8 +14,8 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget> {
       elevation: 10,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 150,
-        height: 100,
+        width: 50,
+        height: 30,
         decoration: BoxDecoration(
           color: Colors.blueAccent,
           borderRadius: BorderRadius.circular(12),

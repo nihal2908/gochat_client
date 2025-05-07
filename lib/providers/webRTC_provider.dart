@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/features/calls/incoming_call_page.dart';
-import 'package:whatsapp_clone/features/calls/outgoing_call_page.dart';
 import 'package:whatsapp_clone/models/user.dart';
 
 class WebrtcProvider with ChangeNotifier {
@@ -23,11 +22,16 @@ class WebrtcProvider with ChangeNotifier {
     context = context;
   }
 
-  void handleIncomingCall() {
+  void handleIncomingCall(Map<String, dynamic> call, User caller) {
+    callerUser = caller;
+    isIncomingCall = true;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const IncomingCallPage(),
+        builder: (context) => IncomingCallPage(
+          incomingCall: call,
+          caller: caller,
+        ),
       ),
     );
     isIncomingCall = true;

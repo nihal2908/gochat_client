@@ -2,30 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:whatsapp_clone/common/theme.dart';
-import 'package:whatsapp_clone/features/calls/ongoing_call_page.dart';
+import 'package:whatsapp_clone/models/user.dart';
 import 'package:whatsapp_clone/providers/webRTC_provider.dart';
 
 class IncomingCallPage extends StatefulWidget {
+  final Map<String, dynamic> incomingCall;
+  final User caller;
 
   const IncomingCallPage({
     super.key,
+    required this.incomingCall,
+    required this.caller,
   });
 
   @override
   State<IncomingCallPage> createState() => _IncomingCallPageState();
 }
 
-class _IncomingCallPageState extends State<IncomingCallPage> with SingleTickerProviderStateMixin {
+class _IncomingCallPageState extends State<IncomingCallPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    // Keep the screen on during call
     WakelockPlus.enable();
 
-    // Pulsating animation for avatar
     _controller = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
@@ -45,6 +48,10 @@ class _IncomingCallPageState extends State<IncomingCallPage> with SingleTickerPr
     // Allow screen to turn off when this screen is disposed
     WakelockPlus.disable();
     super.dispose();
+  }
+
+  void _acceptCall() {
+    
   }
 
   @override
@@ -92,14 +99,14 @@ class _IncomingCallPageState extends State<IncomingCallPage> with SingleTickerPr
                     radius: 70,
                     backgroundColor: Colors.white.withOpacity(0.2),
                     child: const CircleAvatar(
-                            radius: 65,
-                            backgroundColor: WhatsAppTheme.lightGreen,
-                            child: Icon(
-                              Icons.person,
-                              size: 65,
-                              color: Colors.white,
-                            ),
-                          ),
+                      radius: 65,
+                      backgroundColor: WhatsAppTheme.lightGreen,
+                      child: Icon(
+                        Icons.person,
+                        size: 65,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -124,7 +131,8 @@ class _IncomingCallPageState extends State<IncomingCallPage> with SingleTickerPr
                 ),
                 const Spacer(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -140,10 +148,12 @@ class _IncomingCallPageState extends State<IncomingCallPage> with SingleTickerPr
                         label: 'Decline',
                       ),
                       _buildCallActionButton(
-                        icon: callProvider.isVideoCall ? Icons.videocam : Icons.call,
+                        icon: callProvider.isVideoCall
+                            ? Icons.videocam
+                            : Icons.call,
                         backgroundColor: Colors.green,
                         onPressed: () async {
-                          await callProvider.acceptCall();
+                          
                           if (context.mounted) {
                             // Navigator.pushReplacement(
                             //   context,

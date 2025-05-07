@@ -74,6 +74,39 @@ class DBHelper {
     return result.isNotEmpty ? result.first : null;
   }
 
+  Future<Map<String, dynamic>?> getCallerUserById(String userId) async {
+    final db = await database;
+    final user = await db.query(
+      'User',
+      where: '_id = ?',
+      whereArgs: [userId],
+    );
+    if (user.isEmpty) {
+      try {
+        // Fetch user data from the backend
+        final response = await http.get(
+          Uri.parse(
+            '${Secrets.serverUrl}/userdata?userId=$userId',
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final userData = jsonDecode(response.body) as Map<String, dynamic>;
+          await db.insert('User', userData);
+        } else {
+          throw Exception('Failed to fetch user data');
+        }
+      } catch (error) {
+        if (kDebugMode) {
+          print('Error fetching user data: $error');
+        }
+        return null;
+      }
+    } else {
+      return user.first;
+    }
+  }
+
   Future<Map<String, dynamic>?> getContactById(String userId) async {
     final db = await database;
     final result = await db.query(

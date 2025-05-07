@@ -5,6 +5,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/calls/services/webrtc_service.dart';
 import 'package:whatsapp_clone/features/calls/webrtc_test_page.dart';
+import 'package:whatsapp_clone/models/user.dart';
+import 'package:whatsapp_clone/providers/webRTC_provider.dart';
 import 'package:whatsapp_clone/secrets/secrets.dart';
 
 class WebSocketService {
@@ -67,7 +69,7 @@ class WebSocketService {
             await _handleMessageDelete(decoded['data']);
             break;
           case 'webrtc_offer':
-            await WebRTCTestPage.handleOffer(decoded['data']);
+            await _handleCallOffer(decoded['data']);
             break;
           case 'webrtc_answer':
             await WebRTCTestPage.handleAnswer(decoded['data']);
@@ -371,5 +373,17 @@ class WebSocketService {
 
   void disconnect() {
     _channel.sink.close();
+  }
+
+  Future<void> _handleCallOffer(Map<String, dynamic> offer) async {
+    final callerUser = await _dbHelper.getCallerUserById(offer['sender_id']);
+    if (callerUser != null) {
+      final User caller = User.fromMap(callerUser);
+      WebrtcProvider().handleIncomingCall(offer, caller);
+      // WebRTCTestPage.handleOffer(offer, caller);
+    } else {
+      print(
+          'Incomming call from ${offer['sender_id']} but failed to fetch user');
+    }
   }
 }

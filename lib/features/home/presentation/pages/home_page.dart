@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
 import 'package:whatsapp_clone/features/calls/floating_call_widget.dart';
-import 'package:whatsapp_clone/features/calls/screens/calls_list_screen.dart';
-import 'package:whatsapp_clone/features/calls/screens/calls_screen.dart';
 import 'package:whatsapp_clone/features/camera/camera_page.dart';
 import 'package:whatsapp_clone/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:whatsapp_clone/features/group/pages/group_list_page.dart';
@@ -62,10 +60,13 @@ class _HomePageState extends State<HomePage> {
     Offset position = const Offset(100, 100);
 
     return Consumer<WebrtcProvider>(
-      builder: (BuildContext context, WebrtcProvider webRTCProvider,
-              Widget? child) =>
+      builder: (
+        BuildContext context,
+        WebrtcProvider webRTCProvider,
+        Widget? child,
+      ) =>
           Scaffold(
-        appBar: webRTCProvider.isIncomingCall
+        appBar: webRTCProvider.isInOngoingCall
             ? AppBar(
                 title: const Text("Call"),
                 actions: [
@@ -158,20 +159,21 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-            Positioned(
-              left: position.dx,
-              top: position.dy,
-              child: Draggable(
-                feedback: FloatingCallWidget(),
-                childWhenDragging: SizedBox(), // or a transparent widget
-                onDraggableCanceled: (velocity, offset) {
-                  setState(() {
-                    position = offset;
-                  });
-                },
-                child: FloatingCallWidget(),
+            if (webRTCProvider.isInOngoingCall)
+              Positioned(
+                left: position.dx,
+                top: position.dy,
+                child: Draggable(
+                  feedback: FloatingCallWidget(),
+                  childWhenDragging: SizedBox(),
+                  onDraggableCanceled: (velocity, offset) {
+                    setState(() {
+                      position = offset;
+                    });
+                  },
+                  child: FloatingCallWidget(),
+                ),
               ),
-            ),
           ],
         ),
       ),
