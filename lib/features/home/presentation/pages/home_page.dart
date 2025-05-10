@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> {
     webSocketProvider.initialize(CurrentUser.userId!);
     _dbHelper = DBHelper();
     NotificationService.instance.initialize();
+    WebrtcProvider().initialize(context);
   }
 
   @override

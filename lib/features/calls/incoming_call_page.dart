@@ -50,10 +50,6 @@ class _IncomingCallPageState extends State<IncomingCallPage>
     super.dispose();
   }
 
-  void _acceptCall() {
-    
-  }
-
   @override
   Widget build(BuildContext context) {
     // final size = MediaQuery.of(context).size;
@@ -153,7 +149,7 @@ class _IncomingCallPageState extends State<IncomingCallPage>
                             : Icons.call,
                         backgroundColor: Colors.green,
                         onPressed: () async {
-                          
+                          await callProvider.acceptCall();
                           if (context.mounted) {
                             // Navigator.pushReplacement(
                             //   context,
