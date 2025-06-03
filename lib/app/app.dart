@@ -4,7 +4,6 @@ import 'package:whatsapp_clone/app/life_cycle_aware_app.dart';
 import 'package:whatsapp_clone/features/chat/provider/chat_provider.dart';
 import 'package:whatsapp_clone/providers/contact_provider.dart';
 import 'package:whatsapp_clone/providers/media_state_provider.dart';
-import 'package:whatsapp_clone/providers/webRTC_provider.dart';
 import 'package:whatsapp_clone/providers/websocket_provider.dart';
 
 class WhatsAppCloneApp extends StatelessWidget {
@@ -25,12 +24,6 @@ class WhatsAppCloneApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => MediaController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WebrtcProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WebrtcProvider(),
         ),
       ],
       child: MaterialApp(

@@ -9,7 +9,7 @@ import 'package:uuid/uuid.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
 import 'package:whatsapp_clone/features/auth/presentation/pages/user_profile_page.dart';
-import 'package:whatsapp_clone/features/calls/webrtc_test_page.dart';
+import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
 import 'package:whatsapp_clone/features/camera/camera_screen.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/deleted_message_bubble.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/media_bubble.dart';
@@ -22,7 +22,6 @@ import 'package:whatsapp_clone/models/sending_contact.dart';
 import 'package:whatsapp_clone/models/user.dart';
 import 'package:whatsapp_clone/providers/websocket_provider.dart';
 import '../widgets/message_bubble.dart';
-// import 'package:http/http.dart' as http;
 
 class ChatRoomPage extends StatefulWidget {
   final String chatId;
@@ -42,6 +41,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   late final DBHelper _dbHelper;
   late final ChatState chatState;
   late final WebSocketService _webSocketService;
+  late final WebRTCHandler _webrtcHandler;
   // final ScrollController _scrollController = ScrollController();
   final Set<Message> selectedMessages = <Message>{};
   bool hasSentMessages = false;
@@ -71,6 +71,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     getUser();
     _webSocketService =
         Provider.of<WebSocketProvider>(context, listen: false).webSocketService;
+    _webrtcHandler = WebRTCHandler();
     chatState = Provider.of<ChatState>(context, listen: false);
     chatState.openChat(widget.chatId);
     _markAllMessagesAsRead();
@@ -784,14 +785,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return [
       IconButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WebRTCTestPage(
-                  remoteUserId: widget.userId,
-                  webSocketChannel: _webSocketService.channel),
-            ),
-          );
+          _webrtcHandler.startCall(widget.userId);
         },
         icon: const Icon(
           Icons.videocam_outlined,

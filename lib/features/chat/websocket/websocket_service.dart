@@ -3,19 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
-import 'package:whatsapp_clone/features/calls/services/webrtc_service.dart';
-import 'package:whatsapp_clone/features/calls/webrtc_test_page.dart';
-import 'package:whatsapp_clone/models/user.dart';
-import 'package:whatsapp_clone/providers/webRTC_provider.dart';
+import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
 import 'package:whatsapp_clone/secrets/secrets.dart';
 
 class WebSocketService {
   final String userId;
   late WebSocketChannel _channel;
   final DBHelper _dbHelper = DBHelper();
-  // final WebRTCService _webRTCService = WebRTCService();
   final _localNotifications = FlutterLocalNotificationsPlugin();
   bool _isReconnecting = false;
+  late final WebRTCHandler webrtcHandler;
 
   static WebSocketService? _instance;
 
@@ -69,13 +66,11 @@ class WebSocketService {
             await _handleMessageDelete(decoded['data']);
             break;
           case 'webrtc_offer':
-            await _handleCallOffer(decoded['data']);
-            break;
           case 'webrtc_answer':
-            await WebRTCTestPage.handleAnswer(decoded['data']);
-            break;
-          case 'webrtc_ice_candidate':
-            await WebRTCTestPage.handleIceCandidate(decoded['data']);
+          case 'webrtc_candidate':
+          case 'webrtc_hangup':
+          case 'webrtc_decline':
+            webrtcHandler.handleSignal(decoded);
             break;
           case 'group_created':
             break;
@@ -133,9 +128,13 @@ class WebSocketService {
     });
   }
 
-  Future<void> sendToWebSocket(Map<String, dynamic> data) async {
-    _channel.sink.add(jsonEncode(data));
+  void setWebRTCHandler(WebRTCHandler handler) {
+    webrtcHandler = handler;
   }
+
+  // Future<void> sendToWebSocket(Map<String, dynamic> data) async {
+  //   _channel.sink.add(jsonEncode(data));
+  // }
 
   Future<void> _handleMessageReceived(Map<String, dynamic> data) async {
     await _dbHelper.insertMessage(data, false);
@@ -264,6 +263,12 @@ class WebSocketService {
     );
   }
 
+  Future<void> send(Map<String, dynamic> message) async {
+    _channel.sink.add(
+      jsonEncode(message),
+    );
+  }
+
   Future<void> sendDeleteMessage(Map<String, dynamic> message) async {
     await _dbHelper.updateMessage(
       message['_id'],
@@ -373,17 +378,5 @@ class WebSocketService {
 
   void disconnect() {
     _channel.sink.close();
-  }
-
-  Future<void> _handleCallOffer(Map<String, dynamic> offer) async {
-    final callerUser = await _dbHelper.getCallerUserById(offer['sender_id']);
-    if (callerUser != null) {
-      final User caller = User.fromMap(callerUser);
-      WebrtcProvider().handleIncomingCall(offer, caller);
-      // WebRTCTestPage.handleOffer(offer, caller);
-    } else {
-      print(
-          'Incomming call from ${offer['sender_id']} but failed to fetch user');
-    }
   }
 }
