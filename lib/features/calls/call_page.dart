@@ -20,11 +20,16 @@ class _CallPageState extends State<CallPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: callAccepted
-          ? _ongoingCallUI()
-          : handler.isCaller
-              ? _outgoingCallUI()
-              : _incomingCallUI(),
+      body: ValueListenableBuilder<bool>(
+        valueListenable: handler.isCallAccepted,
+        builder: (context, callAccepted, _) {
+          return callAccepted
+              ? _ongoingCallUI()
+              : handler.isCaller
+                  ? _outgoingCallUI()
+                  : _incomingCallUI();
+        },
+      ),
     );
   }
 
@@ -73,7 +78,9 @@ class _CallPageState extends State<CallPage> {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 onPressed: () async {
                   await handler.acceptCall();
-                  setState(() => callAccepted = true);
+                  setState(
+                    () => callAccepted = true,
+                  );
                 },
                 child: const Icon(Icons.call),
               ),
@@ -81,7 +88,7 @@ class _CallPageState extends State<CallPage> {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () {
                   handler.declineCall();
-                  Navigator.pop(context);
+                  // Navigator.pop(context);
                 },
                 child: const Icon(Icons.call_end),
               ),
@@ -129,7 +136,7 @@ class _CallPageState extends State<CallPage> {
               ),
               onPressed: () {
                 handler.hangUp();
-                Navigator.pop(context);
+                // Navigator.pop(context);
               },
               child: const Icon(Icons.call_end),
             ),
@@ -184,8 +191,7 @@ class _CallPageState extends State<CallPage> {
               ValueListenableBuilder<bool>(
                 valueListenable: handler.isSpeakerOn,
                 builder: (_, speakerOn, __) => IconButton(
-                  icon:
-                      Icon(speakerOn ? Icons.volume_up : Icons.volume_off),
+                  icon: Icon(speakerOn ? Icons.volume_up : Icons.volume_off),
                   color: Colors.white,
                   onPressed: handler.toggleSpeaker,
                 ),
@@ -195,7 +201,7 @@ class _CallPageState extends State<CallPage> {
                 color: Colors.red,
                 onPressed: () {
                   handler.hangUp();
-                  Navigator.pop(context);
+                  // Navigator.pop(context);
                 },
               ),
             ],

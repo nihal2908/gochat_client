@@ -31,16 +31,19 @@ class WebRTCHandler {
   final ValueNotifier<bool> isMuted = ValueNotifier<bool>(false);
   final ValueNotifier<bool> videoOff = ValueNotifier<bool>(true);
   final ValueNotifier<bool> isSpeakerOn = ValueNotifier<bool>(true);
-  bool isVideoCall = false;
+  final ValueNotifier<bool> isCallAccepted = ValueNotifier<bool>(false);
+  final ValueNotifier<Duration> callDuration = ValueNotifier(Duration.zero);
 
+  Timer? _callTimer;
+
+  bool isVideoCall = false;
   User? caller;
   User? receiver;
 
   bool get isVideo => isVideoCall;
-bool get isCallInitiator => isCaller;
-User? get callReceiver => receiver;
-User? get callCaller => caller;
-
+  bool get isCallInitiator => isCaller;
+  User? get callReceiver => receiver;
+  User? get callCaller => caller;
 
   final _iceServers = {
     'iceServers': [
@@ -82,6 +85,7 @@ User? get callCaller => caller;
 
     _peerConnection?.onTrack = (RTCTrackEvent event) {
       if (event.streams.isNotEmpty) {
+        _startTimer();
         _remoteStream = event.streams[0];
         remoteRenderer.srcObject = _remoteStream;
       }
@@ -89,10 +93,28 @@ User? get callCaller => caller;
   }
 
   Future<void> _getUserMedia() async {
-    _localStream = await navigator.mediaDevices.getUserMedia({
+    final mediaConstraints = {
       'audio': true,
-      'video': isVideoCall,
-    });
+      'video': {
+        'mandatory': {
+          'minWidth': '640',
+          'minHeight': '480',
+          'maxWidth': '640',
+          'maxHeight': '480',
+          'minFrameRate': '15',
+          'maxFrameRate': '30',
+        },
+        'facingMode': 'user',
+        'optional': [],
+      }
+    };
+
+    _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+
+    // _localStream = await navigator.mediaDevices.getUserMedia({
+    //   'audio': true,
+    //   'video': isVideoCall,
+    // });
     localRenderer.srcObject = _localStream;
   }
 
@@ -186,7 +208,10 @@ User? get callCaller => caller;
           RTCSessionDescription(data['sdp'], data['type']),
         );
 
+        callStatus.value = 'Connecting...';
+        isCallAccepted.value = true;
         _remoteDescriptionSet = true;
+
         for (var candidate in _cachedCandidates) {
           _sendSignal({
             'type': 'webrtc_candidate',
@@ -220,12 +245,15 @@ User? get callCaller => caller;
     RTCSessionDescription answer = await _peerConnection!.createAnswer();
     await _peerConnection!.setLocalDescription(answer);
 
+    isCallAccepted.value = true;
+
     _sendSignal({
       'data': answer.toMap(),
       'type': 'webrtc_answer',
     });
 
     _remoteDescriptionSet = true;
+    callStatus.value = 'Connecting...';
 
     for (var candidate in _cachedCandidates) {
       _sendSignal({
@@ -279,13 +307,20 @@ User? get callCaller => caller;
     await Helper.setSpeakerphoneOn(isSpeakerOn.value);
   }
 
-  void _closeCall() async {
-    isInCall = false;
-    isCaller = false;
-    remoteId = null;
-    caller = null;
-    receiver = null;
+  void _startTimer() {
+    _callTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      callDuration.value += Duration(seconds: 1);
+    });
+  }
 
+  void _stopTimer() {
+    _callTimer?.cancel();
+    callDuration.value = Duration.zero;
+    _callTimer = null;
+  }
+
+  void _closeCall() async {
+    _stopTimer();
     await _peerConnection?.close();
     _peerConnection = null;
 
@@ -301,7 +336,17 @@ User? get callCaller => caller;
     isMuted.value = false;
     videoOff.value = false;
     isSpeakerOn.value = true;
+    isCallAccepted.value = false;
     callStatus.value = '';
+    _remoteDescriptionSet = false;
+    isInCall = false;
+    isCaller = false;
+    remoteId = null;
+    caller = null;
+    receiver = null;
+    selfId = null;
+    remoteId = null;
+    isVideoCall = false;
 
     if (appContext != null) {
       Navigator.of(appContext!).pop();
@@ -314,19 +359,6 @@ User? get callCaller => caller;
     Navigator.of(appContext!).push(
       MaterialPageRoute(
         builder: (_) => CallPage(
-          // localRenderer: localRenderer,
-          // remoteRenderer: remoteRenderer,
-          // caller: caller!,
-          // receiver: receiver!,
-          // isCaller: isCaller,
-          // onAccept: acceptCall,
-          // onDecline: declineCall,
-          // onHangUp: hangUp,
-          // onMuteToggle: toggleMuteAudio,
-          // onVideoToggle: toggleVideo,
-          // onSpeakerToggle: toggleSpeaker,
-          // onSwitchCamera: switchCamera,
-          // callStatus: callStatus,
           webRTCHandler: this,
         ),
       ),
