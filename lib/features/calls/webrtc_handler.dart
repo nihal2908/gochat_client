@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/calls/call_page.dart';
+import 'package:whatsapp_clone/features/calls/floating_call_widget.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
 import 'package:whatsapp_clone/models/user.dart';
 
@@ -26,7 +27,7 @@ class WebRTCHandler {
   String? selfId;
   String? remoteId;
   bool isCaller = false;
-  bool isInCall = false;
+  final ValueNotifier<bool>  isInCall = ValueNotifier<bool>(false);
   final ValueNotifier<String> callStatus = ValueNotifier<String>('');
   final ValueNotifier<bool> isMuted = ValueNotifier<bool>(false);
   final ValueNotifier<bool> videoOff = ValueNotifier<bool>(true);
@@ -137,7 +138,7 @@ class WebRTCHandler {
         await dbHelper!.getUserById(toUserId) as Map<String, dynamic>);
     isCaller = true;
     remoteId = toUserId;
-    isInCall = true;
+    isInCall.value = true;
     isVideoCall = videoCall;
 
     await _createPeerConnection();
@@ -191,7 +192,7 @@ class WebRTCHandler {
           }
         }
 
-        isInCall = true;
+        isInCall.value = true;
         isCaller = false;
 
         await _peerConnection!.setRemoteDescription(
@@ -329,6 +330,32 @@ class WebRTCHandler {
     _callTimer = null;
   }
 
+  OverlayEntry? _floatingOverlay;
+
+void showFloatingWindow() {
+  if (_floatingOverlay != null || appContext == null) return;
+
+  _floatingOverlay = OverlayEntry(
+    builder: (context) {
+      return FloatingCallWidget(
+        webRTCHandler: this,
+        onClose: () {
+          _floatingOverlay?.remove();
+          _floatingOverlay = null;
+        },
+        onFullscreen: () {
+          _floatingOverlay?.remove();
+          _floatingOverlay = null;
+          _openCallPage(); // reopen call page
+        },
+      );
+    },
+  );
+
+  Overlay.of(appContext!).insert(_floatingOverlay!);
+}
+
+
   void _closeCall() async {
     _stopTimer();
     await _peerConnection?.close();
@@ -353,12 +380,11 @@ class WebRTCHandler {
     isCallAccepted.value = false;
     callStatus.value = '';
     _remoteDescriptionSet = false;
-    isInCall = false;
+    isInCall.value = false;
     isCaller = false;
     isVideoCall = false;
     caller = null;
     receiver = null;
-    // selfId = null;
     remoteId = null;
 
     if (appContext != null) {

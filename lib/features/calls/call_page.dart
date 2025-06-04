@@ -18,17 +18,27 @@ class _CallPageState extends State<CallPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: ValueListenableBuilder<bool>(
-        valueListenable: handler.isCallAccepted,
-        builder: (context, callAccepted, _) {
-          return callAccepted
-              ? _ongoingCallUI()
-              : handler.isCaller
-                  ? _outgoingCallUI()
-                  : _incomingCallUI();
-        },
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          if (handler.isVideoCall) {
+            handler.showFloatingWindow();
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: ValueListenableBuilder<bool>(
+          valueListenable: handler.isCallAccepted,
+          builder: (context, callAccepted, _) {
+            return callAccepted
+                ? _ongoingCallUI()
+                : handler.isCaller
+                    ? _outgoingCallUI()
+                    : _incomingCallUI();
+          },
+        ),
       ),
     );
   }
@@ -37,17 +47,21 @@ class _CallPageState extends State<CallPage> {
     return Stack(
       children: [
         handler.isVideo
-            ? RTCVideoView(handler.localRenderer, mirror: true)
-            : Center(
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: handler.caller?.ProfilePictureUrl != null &&
-                          handler.caller!.ProfilePictureUrl!.isNotEmpty
-                      ? NetworkImage(handler.caller!.ProfilePictureUrl!)
-                      : const AssetImage('assets/images/default_profile.jpg')
-                          as ImageProvider,
-                ),
-              ),
+            ? Hero(tag: 'localVideo',child: RTCVideoView(handler.localRenderer, mirror: true))
+            : handler.isCallAccepted.value
+                ? Center(
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage:
+                          handler.caller?.ProfilePictureUrl != null &&
+                                  handler.caller!.ProfilePictureUrl!.isNotEmpty
+                              ? NetworkImage(handler.caller!.ProfilePictureUrl!)
+                              : const AssetImage(
+                                      'assets/images/default_profile.jpg')
+                                  as ImageProvider,
+                    ),
+                  )
+                : Container(),
         Positioned(
           top: 100,
           left: 0,
@@ -117,7 +131,7 @@ class _CallPageState extends State<CallPage> {
     return Stack(
       children: [
         handler.isVideo
-            ? RTCVideoView(handler.localRenderer, mirror: true)
+            ? Hero(tag: 'loaclVideo',child: RTCVideoView(handler.localRenderer, mirror: true))
             : Center(
                 child: CircleAvatar(
                   radius: 60,
@@ -176,15 +190,18 @@ class _CallPageState extends State<CallPage> {
     return handler.isVideo
         ? Stack(
             children: [
-              Positioned.fill(child: RTCVideoView(handler.remoteRenderer)),
+              Positioned.fill(child: Hero(tag: 'remoteVideo',child: RTCVideoView(handler.remoteRenderer))),
               Positioned(
                 bottom: 10,
                 right: 10,
                 width: 120,
                 height: 160,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: RTCVideoView(handler.localRenderer, mirror: true),
+                child: Hero(
+                  tag: 'localVideo',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: RTCVideoView(handler.localRenderer, mirror: true),
+                  ),
                 ),
               ),
               Positioned(

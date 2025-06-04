@@ -64,65 +64,111 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Whatsapp"),
-        actions: [CustomPopupMenuButton()],
-      ),
-      body: PageView(
-        controller: pageController,
-        children: pages,
-        onPageChanged: (value) {
-          currentPageIndex.value = value;
-        },
-      ),
-      bottomNavigationBar: ValueListenableBuilder<int>(
-        valueListenable: currentPageIndex,
-        builder: (context, index, _) {
-          return BottomNavigationBar(
-            onTap: onNavigationTap,
-            currentIndex: index,
-            selectedItemColor: Colors.black,
-            unselectedItemColor: Colors.blue,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.message_outlined),
-                activeIcon: Icon(Icons.message),
-                label: 'Chats',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.groups_outlined),
-                activeIcon: Icon(Icons.groups),
-                label: 'Groups',
-              ),
-              // BottomNavigationBarItem(
-              //   icon: Icon(Icons.phone_outlined),
-              //   activeIcon: Icon(Icons.phone),
-              //   label: 'Calls',
-              // ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings_outlined),
-                activeIcon: Icon(Icons.settings),
-                label: 'Testing',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.camera_alt_outlined),
-                activeIcon: Icon(Icons.camera_alt),
-                label: 'Camera',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.image_outlined),
-                activeIcon: Icon(Icons.image),
-                label: 'Status',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.camera_alt_outlined),
-                activeIcon: Icon(Icons.camera_alt),
-                label: 'Landing',
-              ),
-            ],
-          );
-        },
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: _webrtcHandler.isInCall,
+      builder: (
+        context,
+        inInCall,
+        Widget? child,
+      ) =>
+          Scaffold(
+        appBar: inInCall
+            ? AppBar(
+                centerTitle: true,
+                title: Text(
+                  "${_webrtcHandler.isCaller ? _webrtcHandler.receiver!.Title : _webrtcHandler.caller!.Title} - ${_webrtcHandler.isCallAccepted.value ? _webrtcHandler.callDuration.value.toString() : _webrtcHandler.callStatus.value}",
+                  // style: TextStyle(color: Colors.white),
+                ),
+                // backgroundColor: Colors.black,
+                leading: IconButton(
+                  icon: Icon(
+                      _webrtcHandler.isMuted.value ? Icons.mic_off : Icons.mic),
+                  onPressed: () {
+                    _webrtcHandler.toggleMuteAudio();
+                  },
+                ),
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      _webrtcHandler.isMuted.value
+                          ? Icons.volume_off
+                          : Icons.volume_up,
+                    ),
+                    onPressed: () {
+                      _webrtcHandler.toggleSpeaker();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.call_end),
+                    onPressed: () {
+                      _webrtcHandler.hangUp();
+                    },
+                  ),
+                ],
+              )
+            : null,
+        body: Scaffold(
+          appBar: AppBar(
+            title: const Text("Whatsapp"),
+            actions: [CustomPopupMenuButton()],
+          ),
+          body: PageView(
+            controller: pageController,
+            children: pages,
+            onPageChanged: (value) {
+              currentPageIndex.value = value;
+            },
+          ),
+          bottomNavigationBar: ValueListenableBuilder<int>(
+            valueListenable: currentPageIndex,
+            builder: (context, index, _) {
+              return BottomNavigationBar(
+                onTap: onNavigationTap,
+                currentIndex: index,
+                selectedItemColor: Colors.black,
+                unselectedItemColor: Colors.blue,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.message_outlined),
+                    activeIcon: Icon(Icons.message),
+                    label: 'Chats',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.groups_outlined),
+                    activeIcon: Icon(Icons.groups),
+                    label: 'Groups',
+                  ),
+                  // BottomNavigationBarItem(
+                  //   icon: Icon(Icons.phone_outlined),
+                  //   activeIcon: Icon(Icons.phone),
+                  //   label: 'Calls',
+                  // ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings_outlined),
+                    activeIcon: Icon(Icons.settings),
+                    label: 'Testing',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.camera_alt_outlined),
+                    activeIcon: Icon(Icons.camera_alt),
+                    label: 'Camera',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.image_outlined),
+                    activeIcon: Icon(Icons.image),
+                    label: 'Status',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.camera_alt_outlined),
+                    activeIcon: Icon(Icons.camera_alt),
+                    label: 'Landing',
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }
