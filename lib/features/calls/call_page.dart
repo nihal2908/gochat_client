@@ -36,7 +36,18 @@ class _CallPageState extends State<CallPage> {
   Widget _incomingCallUI() {
     return Stack(
       children: [
-        RTCVideoView(handler.localRenderer, mirror: true),
+        handler.isVideo
+            ? RTCVideoView(handler.localRenderer, mirror: true)
+            : Center(
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage: handler.caller?.ProfilePictureUrl != null &&
+                          handler.caller!.ProfilePictureUrl!.isNotEmpty
+                      ? NetworkImage(handler.caller!.ProfilePictureUrl!)
+                      : const AssetImage('assets/images/default_profile.jpg')
+                          as ImageProvider,
+                ),
+              ),
         Positioned(
           top: 100,
           left: 0,
@@ -45,14 +56,15 @@ class _CallPageState extends State<CallPage> {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundImage: handler.caller?.ProfilePictureUrl != null
+                backgroundImage: handler.caller?.ProfilePictureUrl != null &&
+                        handler.caller!.ProfilePictureUrl!.isNotEmpty
                     ? NetworkImage(handler.caller!.ProfilePictureUrl!)
                     : const AssetImage('assets/images/default_profile.jpg')
                         as ImageProvider,
               ),
               const SizedBox(height: 16),
               Text(
-                handler.caller?.Title ?? "Unknown",
+                handler.caller?.Title ?? "Unknown User",
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -60,8 +72,10 @@ class _CallPageState extends State<CallPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                "Incoming Call...",
+              Text(
+                handler.isVideo
+                    ? "Incoming Video Call..."
+                    : "Incoming Voice Call...",
                 style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ],
@@ -102,7 +116,19 @@ class _CallPageState extends State<CallPage> {
   Widget _outgoingCallUI() {
     return Stack(
       children: [
-        RTCVideoView(handler.localRenderer, mirror: true),
+        handler.isVideo
+            ? RTCVideoView(handler.localRenderer, mirror: true)
+            : Center(
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage: handler.receiver?.ProfilePictureUrl !=
+                              null &&
+                          handler.receiver!.ProfilePictureUrl!.isNotEmpty
+                      ? NetworkImage(handler.receiver!.ProfilePictureUrl!)
+                      : const AssetImage('assets/images/default_profile.jpg')
+                          as ImageProvider,
+                ),
+              ),
         Positioned(
           top: 45,
           left: 0,
@@ -110,7 +136,7 @@ class _CallPageState extends State<CallPage> {
           child: Column(
             children: [
               Text(
-                handler.receiver?.Title ?? "Calling...",
+                handler.receiver?.Title ?? "Unknown User",
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -147,68 +173,121 @@ class _CallPageState extends State<CallPage> {
   }
 
   Widget _ongoingCallUI() {
-    return Stack(
-      children: [
-        Positioned.fill(child: RTCVideoView(handler.remoteRenderer)),
-        Positioned(
-          bottom: 10,
-          right: 10,
-          width: 120,
-          height: 160,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: RTCVideoView(handler.localRenderer, mirror: true),
-          ),
-        ),
-        Positioned(
-          bottom: 30,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return handler.isVideo
+        ? Stack(
             children: [
-              ValueListenableBuilder<bool>(
-                valueListenable: handler.isMuted,
-                builder: (_, isMuted, __) => IconButton(
-                  icon: Icon(isMuted ? Icons.mic_off : Icons.mic),
-                  color: Colors.white,
-                  onPressed: handler.toggleMuteAudio,
+              Positioned.fill(child: RTCVideoView(handler.remoteRenderer)),
+              Positioned(
+                bottom: 10,
+                right: 10,
+                width: 120,
+                height: 160,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: RTCVideoView(handler.localRenderer, mirror: true),
                 ),
               ),
-              ValueListenableBuilder<bool>(
-                valueListenable: handler.videoOff,
-                builder: (_, videoOff, __) => IconButton(
-                  icon: Icon(videoOff ? Icons.videocam_off : Icons.videocam),
-                  color: Colors.white,
-                  onPressed: handler.toggleVideo,
+              Positioned(
+                bottom: 30,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ValueListenableBuilder<bool>(
+                      valueListenable: handler.isMuted,
+                      builder: (_, isMuted, __) => IconButton(
+                        icon: Icon(isMuted ? Icons.mic_off : Icons.mic),
+                        color: Colors.white,
+                        onPressed: handler.toggleMuteAudio,
+                      ),
+                    ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: handler.videoOff,
+                      builder: (_, videoOff, __) => IconButton(
+                        icon: Icon(
+                            videoOff ? Icons.videocam_off : Icons.videocam),
+                        color: Colors.white,
+                        onPressed: handler.toggleVideo,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.switch_camera),
+                      color: Colors.white,
+                      onPressed: handler.switchCamera,
+                    ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: handler.isSpeakerOn,
+                      builder: (_, speakerOn, __) => IconButton(
+                        icon: Icon(
+                            speakerOn ? Icons.volume_up : Icons.volume_off),
+                        color: Colors.white,
+                        onPressed: handler.toggleSpeaker,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.call_end),
+                      color: Colors.red,
+                      onPressed: () {
+                        handler.hangUp();
+                        // Navigator.pop(context);
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.switch_camera),
-                color: Colors.white,
-                onPressed: handler.switchCamera,
-              ),
-              ValueListenableBuilder<bool>(
-                valueListenable: handler.isSpeakerOn,
-                builder: (_, speakerOn, __) => IconButton(
-                  icon: Icon(speakerOn ? Icons.volume_up : Icons.volume_off),
-                  color: Colors.white,
-                  onPressed: handler.toggleSpeaker,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.call_end),
-                color: Colors.red,
-                onPressed: () {
-                  handler.hangUp();
-                  // Navigator.pop(context);
-                },
               ),
             ],
-          ),
-        ),
-      ],
-    );
+          )
+        : Stack(
+            children: [
+              Center(
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage: handler.receiver?.ProfilePictureUrl !=
+                              null &&
+                          handler.receiver!.ProfilePictureUrl!.isNotEmpty
+                      ? NetworkImage(handler.receiver!.ProfilePictureUrl!)
+                      : const AssetImage('assets/images/default_profile.jpg')
+                          as ImageProvider,
+                ),
+              ),
+              Positioned(
+                bottom: 30,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ValueListenableBuilder<bool>(
+                      valueListenable: handler.isMuted,
+                      builder: (_, isMuted, __) => IconButton(
+                        icon: Icon(isMuted ? Icons.mic_off : Icons.mic),
+                        color: Colors.white,
+                        onPressed: handler.toggleMuteAudio,
+                      ),
+                    ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: handler.isSpeakerOn,
+                      builder: (_, speakerOn, __) => IconButton(
+                        icon: Icon(
+                            speakerOn ? Icons.volume_up : Icons.volume_off),
+                        color: Colors.white,
+                        onPressed: handler.toggleSpeaker,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.call_end),
+                      color: Colors.red,
+                      onPressed: () {
+                        handler.hangUp();
+                        // Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
   }
 
   @override

@@ -22,12 +22,12 @@ class WebRTCHandler {
   DBHelper? dbHelper;
   bool _remoteDescriptionSet = false;
   final List<RTCIceCandidate> _cachedCandidates = [];
-  final ValueNotifier<String> callStatus = ValueNotifier<String>('');
 
   String? selfId;
   String? remoteId;
   bool isCaller = false;
   bool isInCall = false;
+  final ValueNotifier<String> callStatus = ValueNotifier<String>('');
   final ValueNotifier<bool> isMuted = ValueNotifier<bool>(false);
   final ValueNotifier<bool> videoOff = ValueNotifier<bool>(true);
   final ValueNotifier<bool> isSpeakerOn = ValueNotifier<bool>(true);
@@ -64,11 +64,13 @@ class WebRTCHandler {
   }
 
   Future<void> _createPeerConnection() async {
-    localRenderer = RTCVideoRenderer();
-    remoteRenderer = RTCVideoRenderer();
+    if (isVideoCall) {
+      localRenderer = RTCVideoRenderer();
+      remoteRenderer = RTCVideoRenderer();
 
-    await localRenderer.initialize();
-    await remoteRenderer.initialize();
+      await localRenderer.initialize();
+      await remoteRenderer.initialize();
+    }
 
     _peerConnection = await createPeerConnection(_iceServers);
 
@@ -87,7 +89,9 @@ class WebRTCHandler {
       if (event.streams.isNotEmpty) {
         _startTimer();
         _remoteStream = event.streams[0];
-        remoteRenderer.srcObject = _remoteStream;
+        if (isVideoCall) {
+          remoteRenderer.srcObject = _remoteStream;
+        }
       }
     };
   }
@@ -95,27 +99,27 @@ class WebRTCHandler {
   Future<void> _getUserMedia() async {
     final mediaConstraints = {
       'audio': true,
-      'video': {
-        'mandatory': {
-          'minWidth': '640',
-          'minHeight': '480',
-          'maxWidth': '640',
-          'maxHeight': '480',
-          'minFrameRate': '15',
-          'maxFrameRate': '30',
-        },
-        'facingMode': 'user',
-        'optional': [],
-      }
+      'video': isVideoCall
+          ? {
+              'mandatory': {
+                'minWidth': '640',
+                'minHeight': '480',
+                'maxWidth': '640',
+                'maxHeight': '480',
+                'minFrameRate': '15',
+                'maxFrameRate': '30',
+              },
+              'facingMode': 'user',
+              'optional': [],
+            }
+          : false,
     };
 
     _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
 
-    // _localStream = await navigator.mediaDevices.getUserMedia({
-    //   'audio': true,
-    //   'video': isVideoCall,
-    // });
-    localRenderer.srcObject = _localStream;
+    if (isVideoCall) {
+      localRenderer.srcObject = _localStream;
+    }
   }
 
   Future<void> startCall({
@@ -222,6 +226,10 @@ class WebRTCHandler {
 
         break;
 
+      case 'webrtc_delivered':
+        callStatus.value = 'Ringing...';
+        break;
+
       case 'webrtc_candidate':
         final candidate = RTCIceCandidate(
           data['candidate'],
@@ -288,6 +296,7 @@ class WebRTCHandler {
   }
 
   void toggleVideo() {
+    if (!isVideoCall) return;
     final videoTrack = _localStream?.getVideoTracks().first;
     if (videoTrack != null) {
       videoOff.value = !videoOff.value;
@@ -296,6 +305,7 @@ class WebRTCHandler {
   }
 
   Future<void> switchCamera() async {
+    if (!isVideoCall) return;
     final videoTrack = _localStream?.getVideoTracks().first;
     if (videoTrack != null) {
       await Helper.switchCamera(videoTrack);
@@ -324,14 +334,18 @@ class WebRTCHandler {
     await _peerConnection?.close();
     _peerConnection = null;
 
+    _localStream?.getAudioTracks().forEach((t) => t.enabled = false);
+
     await _localStream?.dispose();
     await _remoteStream?.dispose();
 
-    localRenderer.srcObject = null;
-    await localRenderer.dispose();
+    if (isVideoCall) {
+      localRenderer.srcObject = null;
+      await localRenderer.dispose();
 
-    remoteRenderer.srcObject = null;
-    await remoteRenderer.dispose();
+      remoteRenderer.srcObject = null;
+      await remoteRenderer.dispose();
+    }
 
     isMuted.value = false;
     videoOff.value = false;
@@ -341,12 +355,11 @@ class WebRTCHandler {
     _remoteDescriptionSet = false;
     isInCall = false;
     isCaller = false;
-    remoteId = null;
+    isVideoCall = false;
     caller = null;
     receiver = null;
-    selfId = null;
+    // selfId = null;
     remoteId = null;
-    isVideoCall = false;
 
     if (appContext != null) {
       Navigator.of(appContext!).pop();
