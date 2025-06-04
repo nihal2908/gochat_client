@@ -17,9 +17,22 @@ class _CallPageState extends State<CallPage> {
   WebRTCHandler get handler => widget.webRTCHandler;
 
   @override
+void initState() {
+  super.initState();
+
+  handler.isInCall.addListener(() {
+    if (!handler.isInCall.value) {
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+    }
+  });
+}
+
+  @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      // canPop: false,
       onPopInvoked: (didPop) {
         if (didPop) {
           if (handler.isVideoCall) {
@@ -47,7 +60,9 @@ class _CallPageState extends State<CallPage> {
     return Stack(
       children: [
         handler.isVideo
-            ? Hero(tag: 'localVideo',child: RTCVideoView(handler.localRenderer, mirror: true))
+            ? Hero(
+                tag: 'localVideo',
+                child: RTCVideoView(handler.localRenderer, mirror: true))
             : handler.isCallAccepted.value
                 ? Center(
                     child: CircleAvatar(
@@ -131,7 +146,9 @@ class _CallPageState extends State<CallPage> {
     return Stack(
       children: [
         handler.isVideo
-            ? Hero(tag: 'loaclVideo',child: RTCVideoView(handler.localRenderer, mirror: true))
+            ? Hero(
+                tag: 'loaclVideo',
+                child: RTCVideoView(handler.localRenderer, mirror: true))
             : Center(
                 child: CircleAvatar(
                   radius: 60,
@@ -190,7 +207,10 @@ class _CallPageState extends State<CallPage> {
     return handler.isVideo
         ? Stack(
             children: [
-              Positioned.fill(child: Hero(tag: 'remoteVideo',child: RTCVideoView(handler.remoteRenderer))),
+              Positioned.fill(
+                  child: Hero(
+                      tag: 'remoteVideo',
+                      child: RTCVideoView(handler.remoteRenderer))),
               Positioned(
                 bottom: 10,
                 right: 10,

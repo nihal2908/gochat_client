@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:whatsapp_clone/features/calls/call_page.dart';
 import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
 
 class FloatingCallWidget extends StatefulWidget {
@@ -21,7 +20,7 @@ class FloatingCallWidget extends StatefulWidget {
 }
 
 class _FloatingCallWidgetState extends State<FloatingCallWidget> {
-  Offset position = const Offset(100, 100);
+  Offset position = const Offset(15, 100);
   double width = 160;
   double height = 220;
   bool showControls = false;
@@ -33,11 +32,16 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget> {
   final double maxHeight = 400;
 
   void _onTap() {
-    setState(() => showControls = true);
-    _hideControlsTimer?.cancel();
-    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+    if (showControls) {
       setState(() => showControls = false);
-    });
+      _hideControlsTimer?.cancel();
+    } else {
+      setState(() => showControls = true);
+      _hideControlsTimer?.cancel();
+      _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+        setState(() => showControls = false);
+      });
+    }
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -61,6 +65,34 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget> {
     super.dispose();
   }
 
+  Widget _localVideoWidget() {
+    return Hero(
+      tag: 'localVideo',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: RTCVideoView(
+          widget.webRTCHandler.localRenderer,
+          mirror: true,
+          objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+        ),
+      ),
+    );
+  }
+
+  Widget _remoteVideoWidget() {
+    return Hero(
+      tag: 'remoteVideo',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: RTCVideoView(
+          widget.webRTCHandler.remoteRenderer,
+          mirror: true,
+          objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -69,7 +101,7 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget> {
       child: GestureDetector(
         onTap: _onTap,
         onPanUpdate: _onPanUpdate,
-        onScaleUpdate: _onScaleUpdate,
+        // onScaleUpdate: _onScaleUpdate,
         child: Material(
           elevation: 10,
           borderRadius: BorderRadius.circular(16),
@@ -81,58 +113,40 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget> {
               color: Colors.black,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Stack(
-              children: [
-                Hero(
-                  tag: 'remoteVideo',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: RTCVideoView(
-                      widget.webRTCHandler.remoteRenderer,
-                      objectFit:
-                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 4,
-                  right: 4,
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: widget.webRTCHandler.isCallAccepted,
-                    builder: (context, callAccepted, _) {
-                      return callAccepted
-                          ? Hero(
-                              tag: 'localVideo',
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: RTCVideoView(
-                                  widget.webRTCHandler.localRenderer,
-                                  objectFit: RTCVideoViewObjectFit
-                                      .RTCVideoViewObjectFitCover,
-                                ),
-                              ),
-                            )
-                          : Container();
-                    },
-                  ),
-                ),
-                if (showControls) ...[
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: widget.onClose,
-                    ),
-                  ),
-                  Center(
-                    child: IconButton(
-                      icon: const Icon(Icons.fullscreen, color: Colors.white),
-                      onPressed: widget.onFullscreen,
-                    ),
-                  ),
-                ],
-              ],
+            child: ValueListenableBuilder<bool>(
+              valueListenable: widget.webRTCHandler.isCallAccepted,
+              builder: (context, callAccepted, _) {
+                return Stack(
+                  children: [
+                    widget.webRTCHandler.isCaller
+                        ? _localVideoWidget()
+                        : _remoteVideoWidget(),
+                    if (callAccepted)
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: _localVideoWidget(),
+                      ),
+                    if (showControls) ...[
+                      Positioned(
+                        top: 3,
+                        right: 3,
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: widget.onClose,
+                        ),
+                      ),
+                      Center(
+                        child: IconButton(
+                          icon:
+                              const Icon(Icons.fullscreen, color: Colors.white),
+                          onPressed: widget.onFullscreen,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
           ),
         ),

@@ -64,7 +64,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     return ValueListenableBuilder<bool>(
       valueListenable: _webrtcHandler.isInCall,
       builder: (
@@ -76,31 +75,52 @@ class _HomePageState extends State<HomePage> {
         appBar: inInCall
             ? AppBar(
                 centerTitle: true,
-                title: Text(
-                  "${_webrtcHandler.isCaller ? _webrtcHandler.receiver!.Title : _webrtcHandler.caller!.Title} - ${_webrtcHandler.isCallAccepted.value ? _webrtcHandler.callDuration.value.toString() : _webrtcHandler.callStatus.value}",
-                  // style: TextStyle(color: Colors.white),
+                title: ValueListenableBuilder<String>(
+                  valueListenable: _webrtcHandler.callStatus,
+                  builder: (context, status, _) => Text(
+                    "${_webrtcHandler.isCaller ? _webrtcHandler.receiver!.Title : _webrtcHandler.caller!.Title} - ${_webrtcHandler.isCallAccepted.value ? _webrtcHandler.callDuration.value.toString() : status}",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-                // backgroundColor: Colors.black,
+                backgroundColor: Colors.black,
                 leading: IconButton(
-                  icon: Icon(
-                      _webrtcHandler.isMuted.value ? Icons.mic_off : Icons.mic),
+                  icon: ValueListenableBuilder(
+                    valueListenable: _webrtcHandler.isMuted,
+                    builder: (context, isMuted, _) => CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        isMuted ? Icons.mic_off : Icons.mic,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
                   onPressed: () {
                     _webrtcHandler.toggleMuteAudio();
                   },
                 ),
                 actions: [
                   IconButton(
-                    icon: Icon(
-                      _webrtcHandler.isMuted.value
-                          ? Icons.volume_off
-                          : Icons.volume_up,
+                    icon: ValueListenableBuilder<bool>(
+                      valueListenable: _webrtcHandler.isSpeakerOn,
+                      builder: (context, speakerOn, _) => CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          speakerOn ? Icons.volume_up : Icons.volume_off,
+                        ),
+                      ),
                     ),
                     onPressed: () {
                       _webrtcHandler.toggleSpeaker();
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.call_end),
+                    icon: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: const Icon(
+                        Icons.call_end,
+                        color: Colors.red,
+                      ),
+                    ),
                     onPressed: () {
                       _webrtcHandler.hangUp();
                     },

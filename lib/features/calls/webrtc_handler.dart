@@ -27,7 +27,7 @@ class WebRTCHandler {
   String? selfId;
   String? remoteId;
   bool isCaller = false;
-  final ValueNotifier<bool>  isInCall = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isInCall = ValueNotifier<bool>(false);
   final ValueNotifier<String> callStatus = ValueNotifier<String>('');
   final ValueNotifier<bool> isMuted = ValueNotifier<bool>(false);
   final ValueNotifier<bool> videoOff = ValueNotifier<bool>(true);
@@ -332,34 +332,40 @@ class WebRTCHandler {
 
   OverlayEntry? _floatingOverlay;
 
-void showFloatingWindow() {
-  if (_floatingOverlay != null || appContext == null) return;
+  void showFloatingWindow() {
+    if (_floatingOverlay != null || appContext == null) return;
 
-  _floatingOverlay = OverlayEntry(
-    builder: (context) {
-      return FloatingCallWidget(
-        webRTCHandler: this,
-        onClose: () {
-          _floatingOverlay?.remove();
-          _floatingOverlay = null;
-        },
-        onFullscreen: () {
-          _floatingOverlay?.remove();
-          _floatingOverlay = null;
-          _openCallPage(); // reopen call page
-        },
-      );
-    },
-  );
+    _floatingOverlay = OverlayEntry(
+      builder: (context) {
+        return FloatingCallWidget(
+          webRTCHandler: this,
+          onClose: () {
+            _floatingOverlay?.remove();
+            _floatingOverlay = null;
+          },
+          onFullscreen: () {
+            _floatingOverlay?.remove();
+            _floatingOverlay = null;
+            _openCallPage(); // reopen call page
+          },
+        );
+      },
+    );
 
-  Overlay.of(appContext!).insert(_floatingOverlay!);
-}
-
+    Overlay.of(appContext!).insert(_floatingOverlay!);
+  }
 
   void _closeCall() async {
+    isInCall.value = false;
     _stopTimer();
     await _peerConnection?.close();
     _peerConnection = null;
+
+    if(_floatingOverlay != null){
+      _floatingOverlay?.remove();
+      _floatingOverlay?.dispose();
+      _floatingOverlay = null;
+    }
 
     _localStream?.getAudioTracks().forEach((t) => t.enabled = false);
 
@@ -380,16 +386,16 @@ void showFloatingWindow() {
     isCallAccepted.value = false;
     callStatus.value = '';
     _remoteDescriptionSet = false;
-    isInCall.value = false;
+
     isCaller = false;
     isVideoCall = false;
     caller = null;
     receiver = null;
     remoteId = null;
 
-    if (appContext != null) {
-      Navigator.of(appContext!).pop();
-    }
+    // if (appContext != null) {
+    //   Navigator.of(appContext!).pop();
+    // }
   }
 
   void _openCallPage() {
