@@ -1,28 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:whatsapp_clone/models/user.dart';
+import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
 
 class CallPage extends StatefulWidget {
-  final RTCVideoRenderer localRenderer;
-  final RTCVideoRenderer remoteRenderer;
-  final bool isCaller;
-  final VoidCallback onAccept;
-  final VoidCallback onDecline;
-  final VoidCallback onHangUp;
-  final User caller;
-  final User receiver;
+  final WebRTCHandler webRTCHandler;
 
-  const CallPage({
-    super.key,
-    required this.localRenderer,
-    required this.remoteRenderer,
-    required this.isCaller,
-    required this.onAccept,
-    required this.onDecline,
-    required this.onHangUp,
-    required this.caller,
-    required this.receiver,
-  });
+  const CallPage({super.key, required this.webRTCHandler});
 
   @override
   State<CallPage> createState() => _CallPageState();
@@ -31,13 +14,15 @@ class CallPage extends StatefulWidget {
 class _CallPageState extends State<CallPage> {
   bool callAccepted = false;
 
+  WebRTCHandler get handler => widget.webRTCHandler;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: callAccepted
           ? _ongoingCallUI()
-          : widget.isCaller
+          : handler.isCaller
               ? _outgoingCallUI()
               : _incomingCallUI(),
     );
@@ -46,7 +31,7 @@ class _CallPageState extends State<CallPage> {
   Widget _incomingCallUI() {
     return Stack(
       children: [
-        RTCVideoView(widget.localRenderer, mirror: true),
+        RTCVideoView(handler.localRenderer, mirror: true),
         Positioned(
           top: 100,
           left: 0,
@@ -55,16 +40,15 @@ class _CallPageState extends State<CallPage> {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundImage: widget.caller.ProfilePictureUrl != null
-                    ? NetworkImage(widget.caller.ProfilePictureUrl!)
-                    : AssetImage(
-                        'assets/images/default_profile.jpg',
-                      ), // Replace with caller avatar
+                backgroundImage: handler.caller?.ProfilePictureUrl != null
+                    ? NetworkImage(handler.caller!.ProfilePictureUrl!)
+                    : const AssetImage('assets/images/default_profile.jpg')
+                        as ImageProvider,
               ),
               const SizedBox(height: 16),
               Text(
-                widget.caller.Title,
-                style: TextStyle(
+                handler.caller?.Title ?? "Unknown",
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -87,17 +71,16 @@ class _CallPageState extends State<CallPage> {
             children: [
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                onPressed: () {
-                  widget.onAccept();
+                onPressed: () async {
+                  await handler.acceptCall();
                   setState(() => callAccepted = true);
                 },
                 child: const Icon(Icons.call),
               ),
-              const SizedBox(width: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () {
-                  widget.onDecline();
+                  handler.declineCall();
                   Navigator.pop(context);
                 },
                 child: const Icon(Icons.call_end),
@@ -112,25 +95,25 @@ class _CallPageState extends State<CallPage> {
   Widget _outgoingCallUI() {
     return Stack(
       children: [
-        RTCVideoView(widget.localRenderer, mirror: true),
+        RTCVideoView(handler.localRenderer, mirror: true),
         Positioned(
-          top: 100,
+          top: 45,
           left: 0,
           right: 0,
           child: Column(
             children: [
               Text(
-                widget.receiver.Title,
-                style: TextStyle(
+                handler.receiver?.Title ?? "Calling...",
+                style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 7),
               const Text(
                 "Calling...",
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style: TextStyle(color: Colors.white, fontSize: 14),
               ),
             ],
           ),
@@ -139,13 +122,17 @@ class _CallPageState extends State<CallPage> {
           bottom: 100,
           right: 0,
           left: 0,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              widget.onHangUp();
-              Navigator.pop(context);
-            },
-            child: const Icon(Icons.call_end),
+          child: Center(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              onPressed: () {
+                handler.hangUp();
+                Navigator.pop(context);
+              },
+              child: const Icon(Icons.call_end),
+            ),
           ),
         )
       ],
@@ -155,9 +142,7 @@ class _CallPageState extends State<CallPage> {
   Widget _ongoingCallUI() {
     return Stack(
       children: [
-        Positioned.fill(
-          child: RTCVideoView(widget.remoteRenderer),
-        ),
+        Positioned.fill(child: RTCVideoView(handler.remoteRenderer)),
         Positioned(
           bottom: 10,
           right: 10,
@@ -165,22 +150,55 @@ class _CallPageState extends State<CallPage> {
           height: 160,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: RTCVideoView(widget.localRenderer, mirror: true),
+            child: RTCVideoView(handler.localRenderer, mirror: true),
           ),
         ),
         Positioned(
           bottom: 30,
           left: 0,
           right: 0,
-          child: Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () {
-                widget.onHangUp();
-                Navigator.pop(context);
-              },
-              child: const Icon(Icons.call_end),
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ValueListenableBuilder<bool>(
+                valueListenable: handler.isMuted,
+                builder: (_, isMuted, __) => IconButton(
+                  icon: Icon(isMuted ? Icons.mic_off : Icons.mic),
+                  color: Colors.white,
+                  onPressed: handler.toggleMuteAudio,
+                ),
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: handler.videoOff,
+                builder: (_, videoOff, __) => IconButton(
+                  icon: Icon(videoOff ? Icons.videocam_off : Icons.videocam),
+                  color: Colors.white,
+                  onPressed: handler.toggleVideo,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.switch_camera),
+                color: Colors.white,
+                onPressed: handler.switchCamera,
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: handler.isSpeakerOn,
+                builder: (_, speakerOn, __) => IconButton(
+                  icon:
+                      Icon(speakerOn ? Icons.volume_up : Icons.volume_off),
+                  color: Colors.white,
+                  onPressed: handler.toggleSpeaker,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.call_end),
+                color: Colors.red,
+                onPressed: () {
+                  handler.hangUp();
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
         ),
       ],
@@ -190,6 +208,6 @@ class _CallPageState extends State<CallPage> {
   @override
   void dispose() {
     super.dispose();
-    // Do not dispose renderers here if WebRTCHandler manages them
+    // Do not dispose video renderers if managed inside handler
   }
 }

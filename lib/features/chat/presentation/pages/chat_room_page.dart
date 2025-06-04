@@ -785,14 +785,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return [
       IconButton(
         onPressed: () {
-          _webrtcHandler.startCall(widget.userId);
+          _webrtcHandler.startCall(toUserId: widget.userId, videoCall: true);
         },
         icon: const Icon(
           Icons.videocam_outlined,
         ),
       ),
       IconButton(
-        onPressed: () {},
+        onPressed: () {
+          _webrtcHandler.startCall(toUserId: widget.userId, videoCall: false);
+        },
         icon: const Icon(
           Icons.call_outlined,
         ),
