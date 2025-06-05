@@ -543,6 +543,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       if (result == null) {
         return;
       } else {
+        // print(result.toString());
         //pahle content me local path dal do bad me upload ke bad jo url return ho wo dal denge fir send message
         final message = {
           '_id': const Uuid().v4(),

@@ -6,6 +6,8 @@ import 'package:whatsapp_clone/features/chat/presentation/pages/chat_room_page.d
 import 'package:whatsapp_clone/features/contact/contacts_page.dart';
 import 'package:whatsapp_clone/models/chat.dart';
 import 'package:intl/intl.dart';
+import 'package:whatsapp_clone/models/message.dart';
+import 'package:whatsapp_clone/statics/static_widgets.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({
@@ -48,119 +50,7 @@ class _ChatListPageState extends State<ChatListPage> {
                   return const Center(child: Text('No chats available.'));
                 }
 
-                return ListView.builder(
-                  itemCount: chats.length,
-                  itemBuilder: (context, index) {
-                    final chat = chats[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        foregroundImage:
-                            chat.ChatUser.ProfilePictureUrl!.isNotEmpty
-                                ? CachedNetworkImageProvider(
-                                    chat.ChatUser.ProfilePictureUrl!,
-                                  )
-                                : const AssetImage(
-                                    'assets/images/default_profile.jpg',
-                                  ),
-                        child: InkWell(
-                          onTap: () {
-                            showProfileImage(context, chat);
-                          },
-                        ),
-                      ),
-                      title: Text(
-                        chat.ChatUser.Title.toString(),
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: chat.LastMessage != null
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                if (chat.LastMessage?.SenderId ==
-                                    CurrentUser.userId)
-                                  chat.LastMessage!.Status == 'sent'
-                                      ? const Icon(
-                                          Icons.check,
-                                          size: 14,
-                                        )
-                                      : chat.LastMessage!.Status == 'read'
-                                          ? const Icon(
-                                              Icons.done_all,
-                                              color: Colors.red,
-                                              size: 14,
-                                            )
-                                          : chat.LastMessage!.Status ==
-                                                  'delivered'
-                                              ? const Icon(
-                                                  Icons.done_all,
-                                                  size: 14,
-                                                )
-                                              : const Icon(
-                                                  Icons.pending_outlined,
-                                                  size: 14,
-                                                ),
-                                const SizedBox(
-                                  width: 3,
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    chat.LastMessage != null
-                                        ? chat.LastMessage!.Content
-                                        : '',
-                                    style: const TextStyle(color: Colors.grey),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : null,
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const SizedBox(
-                            height: 9,
-                          ),
-                          Text(
-                            chat.LastMessage != null
-                                ? formatTimestamp(chat.LastMessage!.Timestamp)
-                                : '',
-                            style: const TextStyle(color: Colors.green),
-                          ),
-                          if (chat.UnreadCount != 0)
-                            Container(
-                              height: 23,
-                              width: 23,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.green,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  chat.UnreadCount.toString(),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            )
-                        ],
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatRoomPage(
-                              chatId: chat.Id,
-                              userId: chat.UserId,
-                            ),
-                          ),
-                        );
-                      },
-                      // onLongPress: () {},
-                    );
-                  },
-                );
+                return chatList(chats: chats);
               },
             );
           }),
@@ -239,6 +129,114 @@ class _ChatListPageState extends State<ChatListPage> {
           ],
         );
       },
+    );
+  }
+
+  Widget chatList({required List<Chat> chats}) {
+    return ListView.builder(
+      itemCount: chats.length,
+      itemBuilder: (context, index) {
+        final chat = chats[index];
+        return chatListItem(chat: chat);
+      },
+    );
+  }
+
+  Widget chatListItem({required Chat chat}) {
+    Message? lastMessage = chat.LastMessage;
+    return ListTile(
+      leading: CircleAvatar(
+        foregroundImage: chat.ChatUser.ProfilePictureUrl!.isNotEmpty
+            ? CachedNetworkImageProvider(
+                chat.ChatUser.ProfilePictureUrl!,
+              )
+            : const AssetImage(
+                Statics.defaultProfileImage,
+              ),
+        child: InkWell(
+          onTap: () {
+            showProfileImage(context, chat);
+          },
+        ),
+      ),
+      title: Text(
+        chat.ChatUser.Title.toString(),
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      subtitle: lastMessage != null
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (lastMessage.SenderId == CurrentUser.userId)
+                  Statics.statusIcon[lastMessage.Status]!,
+                const SizedBox(
+                  width: 3,
+                ),
+                Flexible(
+                  child: lastMessage.Type == 'text'
+                      ? Text(
+                          lastMessage.Content,
+                          style: TextStyle(color: Colors.grey.shade700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : Row(
+                          children: [
+                            Statics.messageTypeIcon[lastMessage.Type]!,
+                            const SizedBox(width: 5),
+                            Text(
+                              lastMessage.Caption ?? '',
+                              style: TextStyle(color: Colors.grey.shade700),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            )
+          : null,
+      trailing: lastMessage != null
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const SizedBox(
+                  height: 9,
+                ),
+                Text(
+                  formatTimestamp(lastMessage.Timestamp),
+                  style: const TextStyle(color: Colors.green),
+                ),
+                if (chat.UnreadCount != 0)
+                  Container(
+                    height: 23,
+                    width: 23,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green,
+                    ),
+                    child: Center(
+                      child: Text(
+                        chat.UnreadCount.toString(),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  )
+              ],
+            )
+          : null,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoomPage(
+              chatId: chat.Id,
+              userId: chat.UserId,
+            ),
+          ),
+        );
+      },
+      // onLongPress: () {},
     );
   }
 }

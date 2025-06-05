@@ -100,32 +100,33 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
               child: CircleAvatar(
                 radius: 25,
                 backgroundColor: Colors.black.withOpacity(0.5),
-                child: Stack(
-                  children: [
-                    StreamBuilder<double>(
-                        stream: UploadDownloadManager()
-                            .getUploadProgressStream(widget.message.Id),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
+                child: Center(
+                  child: Stack(
+                    children: [
+                      StreamBuilder<double>(
+                          stream: UploadDownloadManager()
+                              .getUploadProgressStream(widget.message.Id),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData || snapshot.data == 1.0) {
+                              return CircularProgressIndicator(
+                                color: Colors.green,
+                              );
+                            }
+                            double progress = snapshot.data!;
                             return CircularProgressIndicator(
+                              value: progress,
                               color: Colors.green,
                             );
-                          }
-                          double progress = snapshot.data!;
-                          // print(progress);
-                          return CircularProgressIndicator(
-                            value: progress,
-                            color: Colors.green,
-                          );
-                        }),
-                    IconButton(
-                      onPressed: _stopUpload,
-                      icon: Icon(
-                        Icons.close,
-                        color: Colors.white,
+                          }),
+                      IconButton(
+                        onPressed: _stopUpload,
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -11,6 +11,7 @@ import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
 import 'package:whatsapp_clone/models/media.dart';
 import 'package:whatsapp_clone/models/message.dart';
 import 'package:whatsapp_clone/secrets/secrets.dart';
+import 'package:whatsapp_clone/statics/static_widgets.dart';
 
 class MediaBubble extends StatefulWidget {
   final Message message;
@@ -173,26 +174,7 @@ class _MediaBubbleState extends State<MediaBubble> {
                     const SizedBox(
                       width: 4,
                     ),
-                    widget.message.Status == 'sent'
-                        ? const Icon(
-                            Icons.check,
-                            size: 14,
-                          )
-                        : widget.message.Status == 'read'
-                            ? Icon(
-                                Icons.done_all,
-                                color: Colors.blue.shade700,
-                                size: 14,
-                              )
-                            : widget.message.Status == 'delivered'
-                                ? const Icon(
-                                    Icons.done_all,
-                                    size: 14,
-                                  )
-                                : const Icon(
-                                    Icons.pending_outlined,
-                                    size: 14,
-                                  ),
+                    Statics.statusIcon[widget.message.Status]!,
                   ],
                 ),
               ),

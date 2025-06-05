@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/models/message.dart';
+import 'package:whatsapp_clone/statics/static_widgets.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -70,26 +71,7 @@ class MessageBubble extends StatelessWidget {
                       const SizedBox(
                         width: 4,
                       ),
-                      message.Status == 'sent'
-                          ? const Icon(
-                              Icons.check,
-                              size: 14,
-                            )
-                          : message.Status == 'read'
-                              ? Icon(
-                                  Icons.done_all,
-                                  color: Colors.blue.shade700,
-                                  size: 14,
-                                )
-                              : message.Status == 'delivered'
-                                  ? const Icon(
-                                      Icons.done_all,
-                                      size: 14,
-                                    )
-                                  : const Icon(
-                                      Icons.pending_outlined,
-                                      size: 14,
-                                    ),
+                      Statics.statusIcon[message.Status]!,
                     ],
                   ),
                 ),
