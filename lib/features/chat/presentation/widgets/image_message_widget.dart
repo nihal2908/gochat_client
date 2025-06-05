@@ -97,29 +97,36 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
               ),
             ),
             child: Center(
-              child: Stack(
-                children: [
-                  StreamBuilder<double>(
-                      stream: UploadDownloadManager()
-                          .getUploadProgressStream(widget.message.Id),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
+              child: CircleAvatar(
+                radius: 25,
+                backgroundColor: Colors.black.withOpacity(0.5),
+                child: Stack(
+                  children: [
+                    StreamBuilder<double>(
+                        stream: UploadDownloadManager()
+                            .getUploadProgressStream(widget.message.Id),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return CircularProgressIndicator(
+                              color: Colors.green,
+                            );
+                          }
+                          double progress = snapshot.data!;
+                          // print(progress);
                           return CircularProgressIndicator(
+                            value: progress,
                             color: Colors.green,
                           );
-                        }
-                        double progress = snapshot.data!;
-                        // print(progress);
-                        return CircularProgressIndicator(
-                          value: progress,
-                          color: Colors.green,
-                        );
-                      }),
-                  IconButton(
-                    onPressed: _stopUpload,
-                    icon: Icon(Icons.close),
-                  ),
-                ],
+                        }),
+                    IconButton(
+                      onPressed: _stopUpload,
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -134,12 +141,16 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
               ),
             ),
             child: Center(
-              child: IconButton(
-                onPressed: _uploadFile,
-                icon: Icon(
-                  Icons.file_upload_outlined,
-                  color: Colors.white,
-                  size: 30,
+              child: CircleAvatar(
+                radius: 25,
+                backgroundColor: Colors.black.withOpacity(0.5),
+                child: IconButton(
+                  onPressed: _uploadFile,
+                  icon: Icon(
+                    Icons.file_upload_outlined,
+                    color: Colors.white,
+                    size: 30,
+                  ),
                 ),
               ),
             ),
@@ -164,31 +175,45 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
     else {
       if (isDownloading) {
         return Center(
-          child: Stack(
-            children: [
-              StreamBuilder<double>(
-                stream: UploadDownloadManager()
-                    .getDownloadProgressStream(widget.message.Id),
-                builder: (context, snapshot) {
-                  double progress = snapshot.data ?? 0;
-                  return CircularProgressIndicator(
-                    value: progress,
-                    color: Colors.green,
-                  );
-                },
-              ),
-              IconButton(
-                onPressed: _pauseDownload,
-                icon: Icon(Icons.close),
-              ),
-            ],
+          child: CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.black.withOpacity(0.5),
+            child: Stack(
+              children: [
+                StreamBuilder<double>(
+                  stream: UploadDownloadManager()
+                      .getDownloadProgressStream(widget.message.Id),
+                  builder: (context, snapshot) {
+                    double progress = snapshot.data ?? 0;
+                    return CircularProgressIndicator(
+                      value: progress,
+                      color: Colors.green,
+                    );
+                  },
+                ),
+                IconButton(
+                  onPressed: _pauseDownload,
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       } else if (mediaMessage == null) {
         return Center(
-          child: IconButton(
-            icon: Icon(Icons.download),
-            onPressed: _downloadMedia,
+          child: CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.black.withOpacity(0.5),
+            child: IconButton(
+              icon: Icon(
+                Icons.download,
+                color: Colors.white,
+              ),
+              onPressed: _downloadMedia,
+            ),
           ),
         );
       } else {
@@ -224,6 +249,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
         _webSocketService.sendMessage(widget.message.toMap());
       },
     );
+
     loadMedia();
   }
 

@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class UploadDownloadManager {
   static final UploadDownloadManager _instance =
@@ -9,30 +8,24 @@ class UploadDownloadManager {
   factory UploadDownloadManager() => _instance;
   UploadDownloadManager._internal();
 
-  final String uploadUrl =
-      "https://falcon-sweet-physically.ngrok-free.app/upload";
+  final String fileserverUrl = "https://falcon-sweet-physically.ngrok-free.app";
 
-  final Map<String, bool> _uploadingMessages = {}; // Tracks ongoing uploads
-  final Map<String, StreamController<double>> _uploadProgressStreams =
-      {}; // Tracks progress streams
+  final Map<String, bool> _uploadingMessages = {};
+  final Map<String, StreamController<double>> _uploadProgressStreams = {};
 
-  final Map<String, bool> _downloadingMessages = {}; // Tracks ongoing downloads
-  final Map<String, StreamController<double>> _downloadProgressStreams =
-      {}; // Tracks progress streams
+  final Map<String, bool> _downloadingMessages = {};
+  final Map<String, StreamController<double>> _downloadProgressStreams = {};
 
-  /// Getter for tracking active uploads
+  final Dio _dio = Dio();
+
   Map<String, bool> get uploadingMessages =>
       Map.unmodifiable(_uploadingMessages);
-
-  /// Getter for tracking active downloads
   Map<String, bool> get downloadingMessages =>
       Map.unmodifiable(_downloadingMessages);
 
-  /// Getter to access upload progress stream for a message
   Stream<double>? getUploadProgressStream(String messageId) =>
       _uploadProgressStreams[messageId]?.stream;
 
-  /// Getter to access download progress stream for a message
   Stream<double>? getDownloadProgressStream(String messageId) =>
       _downloadProgressStreams[messageId]?.stream;
 
@@ -40,7 +33,6 @@ class UploadDownloadManager {
     required File file,
     required String messageId,
     required Future<void> Function(String url) onComplete,
-    // required Function(double progress) onProgressUpdate,
   }) async {
     if (_uploadingMessages.containsKey(messageId)) return;
 
@@ -48,100 +40,37 @@ class UploadDownloadManager {
     _uploadProgressStreams[messageId] = StreamController<double>();
     _uploadProgressStreams[messageId]?.add(0.0);
 
-    var request = http.MultipartRequest("POST", Uri.parse(uploadUrl));
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    try {
+      FormData formData = FormData.fromMap({
+        "file": await MultipartFile.fromFile(file.path,
+            filename: file.path.split('/').last),
+      });
 
-    var response = await request.send();
+      final response = await _dio.post(
+        '$fileserverUrl/upload',
+        data: formData,
+        onSendProgress: (int sent, int total) {
+          double progress = sent / total;
+          _uploadProgressStreams[messageId]?.add(progress);
+        },
+      );
 
-    response.stream.transform(utf8.decoder).listen((value) {
-      try {
-        var jsonResponse = jsonDecode(value);
-        if (jsonResponse.containsKey("uploaded")) {
-          double progress = jsonResponse["uploaded"] / file.lengthSync();
-          _uploadProgressStreams[messageId]
-              ?.add(progress); // Update UI with real server-side progress
-        } else if (jsonResponse.containsKey("file_url")) {
-          String fileUrl = jsonResponse["file_url"];
-          onComplete(fileUrl);
-        }
-      } catch (e) {
-        print("Parsing error: $e");
+      if (response.statusCode == 200 && response.data['file_id'] != null) {
+        print(response.data);
+        await onComplete(
+            '$fileserverUrl/download/${response.data['file_id'].toString()}');
+      } else {
+        print("Upload failed or invalid response");
       }
-    });
-
-    if (response.statusCode != 200) {
-      print("Upload failed");
+    } catch (e) {
+      print("Upload error: $e");
     }
 
     _uploadingMessages.remove(messageId);
-    _uploadProgressStreams[messageId]?.close();
+    await _uploadProgressStreams[messageId]?.close();
     _uploadProgressStreams.remove(messageId);
   }
 
-  // /// Uploads a file, tracks progress, and updates DB on completion
-  // Future<void> uploadFile({
-  //   required File file,
-  //   required String messageId,
-  //   required Future<void> Function(String url) onComplete,
-  // }) async {
-  //   if (_uploadingMessages.containsKey(messageId)) return;
-
-  //   _uploadingMessages[messageId] = true;
-  //   _uploadProgressStreams[messageId] = StreamController<double>();
-  //   // _uploadProgressStreams[messageId]?.add(0.0);
-
-  //   var request = http.MultipartRequest("POST", Uri.parse(uploadUrl));
-  //   var fileStream = http.ByteStream(Stream.castFrom(file.openRead()));
-  //   var totalSize = await file.length();
-
-  //   var multipartFile = http.MultipartFile(
-  //     'file',
-  //     fileStream,
-  //     totalSize,
-  //     filename: file.path.split('/').last,
-  //   );
-
-  //   request.files.add(multipartFile);
-  //   var response = await request.send();
-
-  //   // Handle streaming response
-  //   response.stream.transform(utf8.decoder).listen((data) {
-  //     // data = data.trim();
-  //     print('received data:' + data + '\n');
-
-  //     if (data.startsWith('event:progress')) {
-  //       try {
-  //         int progressIndex = data.indexOf("data:") + 5;
-  //         double progress = double.parse(data.substring(progressIndex));
-  //         _uploadProgressStreams[messageId]?.add(progress);
-  //       } catch (e) {
-  //         print("JSON Parse Error (progress): $e");
-  //       }
-  //       // }
-  //     }
-  //     // Only process final response if it's valid JSON
-  //     else if (data.startsWith("{")) {
-  //       try {
-  //         var jsonResponse = jsonDecode(data);
-  //         String fileUrl = jsonResponse["file_url"];
-  //         print("File URL: $fileUrl");
-  //         _uploadProgressStreams[messageId]?.add(1.0);
-  //         onComplete(fileUrl);
-  //       } catch (e) {
-  //         print("Final Response Parse Error: $e");
-  //       }
-  //     } else {
-  //       print("Ignoring non-JSON response: $data");
-  //     }
-  //   });
-
-  //   // Cleanup
-  //   _uploadingMessages.remove(messageId);
-  //   _uploadProgressStreams[messageId]?.close();
-  //   _uploadProgressStreams.remove(messageId);
-  // }
-
-  /// Downloads a file, tracks progress, and updates DB on completion
   Future<void> downloadFile({
     required String fileUrl,
     required String messageId,
@@ -152,32 +81,25 @@ class UploadDownloadManager {
 
     _downloadingMessages[messageId] = true;
     _downloadProgressStreams[messageId] = StreamController<double>();
+    _downloadProgressStreams[messageId]?.add(0.0);
 
-    var request =
-        await http.Client().send(http.Request("GET", Uri.parse(fileUrl)));
-    var totalSize = request.contentLength ?? 1;
-    var receivedSize = 0;
-    var file = File(savePath);
-    var fileStream = file.openWrite();
-
-    await request.stream.transform(
-      StreamTransformer.fromHandlers(
-        handleData: (List<int> chunk, EventSink<List<int>> sink) {
-          receivedSize += chunk.length;
-          double progress = receivedSize / totalSize;
+    try {
+      await _dio.download(
+        fileUrl,
+        savePath,
+        onReceiveProgress: (received, total) {
+          double progress = total > 0 ? received / total : 0;
           _downloadProgressStreams[messageId]?.add(progress);
-          sink.add(chunk);
         },
-      ),
-    ).pipe(fileStream);
-
-    await fileStream.close();
-
-    _downloadProgressStreams[messageId]?.add(1.0);
-    await onComplete();
+      );
+      _downloadProgressStreams[messageId]?.add(1.0);
+      await onComplete();
+    } catch (e) {
+      print("Download error: $e");
+    }
 
     _downloadingMessages.remove(messageId);
-    _downloadProgressStreams[messageId]?.close();
+    await _downloadProgressStreams[messageId]?.close();
     _downloadProgressStreams.remove(messageId);
   }
 }
