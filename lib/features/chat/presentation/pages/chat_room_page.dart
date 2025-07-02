@@ -42,6 +42,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   late final ChatState chatState;
   late final WebSocketService _webSocketService;
   late final WebRTCHandler _webrtcHandler;
+  late final User chatUser;
   // final ScrollController _scrollController = ScrollController();
   final Set<Message> selectedMessages = <Message>{};
   bool hasSentMessages = false;
@@ -210,7 +211,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _onTyping(bool isTyping) {
-    // widget.webSocketService.sendTypingEvent(widget.chatId, 1);
+    _webSocketService.sendTypingEvent(widget.chatId, 1);
   }
 
   void updateSelectionTypes() {

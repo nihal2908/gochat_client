@@ -3,6 +3,8 @@ import 'package:whatsapp_clone/app/app_life_handler.dart';
 import 'package:whatsapp_clone/features/splash/splash_page.dart';
 
 class LifecycleAwareApp extends StatefulWidget {
+  const LifecycleAwareApp({super.key});
+
   @override
   _LifecycleAwareAppState createState() => _LifecycleAwareAppState();
 }

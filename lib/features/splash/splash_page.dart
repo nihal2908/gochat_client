@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
 import 'package:whatsapp_clone/features/auth/presentation/pages/login_page.dart';
 import 'package:whatsapp_clone/features/home/presentation/pages/home_page.dart';
@@ -17,14 +16,14 @@ class _SplashPageState extends State<SplashPage> {
     _initializeApp();
   }
 
-  Future<void> _initializeApp() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('USERNAME');
-    String? userid = prefs.getString('USERID');
-    String? phone = prefs.getString('PHONE');
+  void _initializeApp() async {
+    final delay = Future.delayed(const Duration(seconds: 2));
 
-    if (username != null && phone != null && userid != null) {
-      CurrentUser.userId = userid;
+    final nextPage = _checkNextPage();
+
+    await Future.wait([delay, nextPage]);
+
+    if (nextPage == 'home_page') {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -41,11 +40,29 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
+  Future<String> _checkNextPage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? username = prefs.getString('USERNAME');
+    String? userid = prefs.getString('USERID');
+    String? phone = prefs.getString('PHONE');
+
+    if (username != null && phone != null && userid != null) {
+      CurrentUser.userId = userid;
+      return 'home_page';
+    } else {
+      return 'login_page';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Image.asset(
+          'assets/images/app_logo.png',
+          height: MediaQuery.of(context).size.width * 0.5,
+          width: MediaQuery.of(context).size.width * 0.5,
+        ),
       ),
     );
   }
