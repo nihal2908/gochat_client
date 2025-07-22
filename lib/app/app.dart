@@ -27,9 +27,9 @@ class WhatsAppCloneApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'WhatsApp Clone',
+        title: 'GoChat',
         // theme: AppTheme.lightTheme,
-        theme: ThemeData(primarySwatch: Colors.green),
+        theme: ThemeData(primarySwatch: Colors.blue),
         home: LifecycleAwareApp(),
         // home: SplashPage(),
         debugShowCheckedModeBanner: false,

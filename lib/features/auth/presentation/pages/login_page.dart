@@ -8,7 +8,7 @@ import 'package:whatsapp_clone/features/auth/presentation/pages/siginup_page.dar
 import 'package:whatsapp_clone/features/auth/presentation/widgets/auth_button.dart';
 import 'package:whatsapp_clone/features/auth/presentation/widgets/text_input_field.dart';
 import 'package:whatsapp_clone/features/splash/splash_page.dart';
-import 'package:whatsapp_clone/statics/static_widgets.dart';
+import 'package:whatsapp_clone/utils/utils.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   final DBHelper _dbHelper = DBHelper();
 
   void _login() async {
-    Statics.showLoadingMessage(message: 'Loading...', context: context);
+    showLoadingMessage(message: 'Loading...', context: context);
 
     final response = await AuthApi.login(
       phone: _phoneController.text,
@@ -38,11 +38,11 @@ class _LoginPageState extends State<LoginPage> {
       final phone = data['user']['phone'];
       final userId = data['user']['_id'];
       final prefs = await SharedPreferences.getInstance();
-      prefs.setString("USERNAME", username.toString());
-      prefs.setString("PHONE", phone.toString());
-      prefs.setString("USERID", userId.toString());
+      await prefs.setString("USERNAME", username.toString());
+      await prefs.setString("PHONE", phone.toString());
+      await prefs.setString("USERID", userId.toString());
 
-      _dbHelper.saveCurrentUser(data);
+      await _dbHelper.saveCurrentUser(data);
       Navigator.pop(context);
       Navigator.pushAndRemoveUntil(
         context,
@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } else {
       Navigator.pop(context);
-      Statics.showTextSnackBar(context: context, text: response.message);
+      showTextSnackBar(context: context, text: response.message);
     }
   }
 
@@ -90,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 16),
             TextButton(
               onPressed: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const SignupPage(),

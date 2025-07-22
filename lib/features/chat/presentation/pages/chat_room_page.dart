@@ -612,6 +612,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 controller: _controller,
                 keyboardType: TextInputType.multiline,
                 textAlignVertical: TextAlignVertical.center,
+                textCapitalization: TextCapitalization.sentences,
                 maxLines: 5,
                 minLines: 1,
                 decoration: InputDecoration(

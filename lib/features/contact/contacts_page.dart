@@ -17,15 +17,19 @@ class ContactsPage extends StatefulWidget {
 
 class _ContactsPageState extends State<ContactsPage> {
   late DBHelper _dbHelper;
+  bool refreshing = false;
 
   @override
   void initState() {
     super.initState();
     _dbHelper = DBHelper();
+    refreshing = true;
     fetchContacts();
   }
 
   Future<void> fetchContacts() async {
+    if (refreshing) return;
+    refreshing = true;
     Provider.of<ContactProvider>(context, listen: false).refreshContacts();
   }
 
@@ -87,7 +91,7 @@ class _ContactsPageState extends State<ContactsPage> {
                         CurrentUser.userId!
                       ]..sort();
                       final chatId = ids.join('_');
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChatRoomPage(

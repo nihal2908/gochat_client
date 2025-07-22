@@ -3,7 +3,7 @@ import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/group/pages/new_group_details.dart';
 import 'package:whatsapp_clone/models/contact.dart';
 import 'package:whatsapp_clone/models/sending_contact.dart';
-import 'package:whatsapp_clone/statics/static_widgets.dart';
+import 'package:whatsapp_clone/utils/utils.dart';
 
 class SelectContactsToSend extends StatefulWidget {
   const SelectContactsToSend({super.key});
@@ -183,7 +183,7 @@ class _SelectContactsToSendState extends State<SelectContactsToSend> {
               ),
             );
           } else {
-            Statics.showTextSnackBar(
+            showTextSnackBar(
               context: context,
               text: 'Select atleast 1 contact.',
             );

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/group/pages/new_group_details.dart';
 import 'package:whatsapp_clone/models/contact.dart';
-import 'package:whatsapp_clone/statics/static_widgets.dart';
+import 'package:whatsapp_clone/utils/utils.dart';
 
 class SelectContactForGroup extends StatefulWidget {
   const SelectContactForGroup({super.key});
@@ -182,7 +182,7 @@ class _SelectContactForGroupState extends State<SelectContactForGroup> {
               ),
             );
           } else {
-            Statics.showTextSnackBar(
+            showTextSnackBar(
               context: context,
               text: 'Select atleast 1 contact.',
             );

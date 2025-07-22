@@ -47,7 +47,7 @@ class Chat {
       UpdatedAt: map['updated_at'].toString().isNotEmpty
           ? DateTime.parse(map['updated_at'])
           : DateTime.now(),
-      IsArchieved: map['is_archieved'] != null ? map['is_archieved'] as int : 0,
+      IsArchieved: map['is_archived'] != null ? map['is_archived'] as int : 0,
       UnreadCount: map['unread_count'] as int,
       ChatUser: User(
         Id: map['user_id'],

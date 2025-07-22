@@ -2,24 +2,21 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
-import 'package:whatsapp_clone/features/chat/presentation/pages/archived_chat_list.dart';
 import 'package:whatsapp_clone/features/chat/presentation/pages/chat_room_page.dart';
-import 'package:whatsapp_clone/features/contact/contacts_page.dart';
 import 'package:whatsapp_clone/models/chat.dart';
 import 'package:whatsapp_clone/models/message.dart';
 import 'package:whatsapp_clone/statics/static_widgets.dart';
 import 'package:whatsapp_clone/utils/utils.dart';
 
-class ChatListPage extends StatefulWidget {
-  const ChatListPage({
-    super.key,
-  });
+class ArchivedChatList extends StatefulWidget {
+  final DBHelper dbHelper;
+  const ArchivedChatList({super.key, required this.dbHelper});
 
   @override
-  State<ChatListPage> createState() => _ChatListPageState();
+  State<ArchivedChatList> createState() => _ArchivedChatListState();
 }
 
-class _ChatListPageState extends State<ChatListPage> {
+class _ArchivedChatListState extends State<ArchivedChatList> {
   late final DBHelper _dbHelper;
   final Set<String> _selectedChatIds = {};
   bool get isSelectionMode => _selectedChatIds.isNotEmpty;
@@ -79,7 +76,7 @@ class _ChatListPageState extends State<ChatListPage> {
       appBar: AppBar(
         title: isSelectionMode
             ? Text('${_selectedChatIds.length} selected')
-            : const Text('Chats'),
+            : const Text('Archived Chats'),
         titleTextStyle: TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.black,
@@ -99,9 +96,9 @@ class _ChatListPageState extends State<ChatListPage> {
                   onPressed: _deleteChat,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.archive),
+                  icon: const Icon(Icons.unarchive),
                   onPressed: () async {
-                    await _dbHelper.archiveChats(_selectedChatIds.toList());
+                    await _dbHelper.unarchiveChats(_selectedChatIds.toList());
                     clearSelection();
                   },
                 ),
@@ -112,7 +109,7 @@ class _ChatListPageState extends State<ChatListPage> {
         stream: _dbHelper.updateStream,
         builder: (context, snapshot) {
           return FutureBuilder<List<Chat>>(
-            future: _dbHelper.getChats(),
+            future: _dbHelper.getChats(archived: true),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
@@ -150,51 +147,14 @@ class _ChatListPageState extends State<ChatListPage> {
           );
         },
       ),
-      floatingActionButton: isSelectionMode
-          ? null
-          : FloatingActionButton(
-              backgroundColor: Colors.green.shade500,
-              child: const Icon(Icons.message, size: 30),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ContactsPage()),
-                );
-              },
-            ),
     );
   }
 
   Widget chatList({required List<Chat> chats}) {
-    bool hasArchivedChats = chats.any((chat) => chat.IsArchieved == 1);
-
-    // Filter unarchived chats
-    final visibleChats = chats.where((chat) => chat.IsArchieved != 1).toList();
-
-    // Add +1 to item count if archived tile is needed
     return ListView.builder(
-      itemCount: visibleChats.length + (hasArchivedChats ? 1 : 0),
+      itemCount: chats.length,
       itemBuilder: (context, index) {
-        if (hasArchivedChats && index == 0) {
-          // Insert "Archived Chats" tile at the top
-          return ListTile(
-            leading: Icon(Icons.archive),
-            title: Text("Archived Chats"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ArchivedChatList(
-                    dbHelper: _dbHelper,
-                  ),
-                ),
-              );
-            },
-          );
-        }
-
-        final chatIndex = hasArchivedChats ? index - 1 : index;
-        final chat = visibleChats[chatIndex];
+        final chat = chats[index];
         final selected = isChatSelected(chat);
 
         return chatListItem(chat: chat, selected: selected);

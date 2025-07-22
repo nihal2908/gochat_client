@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
 import 'package:whatsapp_clone/features/auth/presentation/pages/login_page.dart';
-import 'package:whatsapp_clone/features/home/presentation/pages/home_page.dart';
+import 'package:whatsapp_clone/features/home/pages/home_page.dart';
 
 class SplashPage extends StatefulWidget {
   @override
@@ -19,9 +19,10 @@ class _SplashPageState extends State<SplashPage> {
   void _initializeApp() async {
     final delay = Future.delayed(const Duration(seconds: 2));
 
-    final nextPage = _checkNextPage();
+    final futurePage = _checkNextPage();
 
-    await Future.wait([delay, nextPage]);
+    final results = await Future.wait([delay, futurePage]);
+    final nextPage = results[1] as String;
 
     if (nextPage == 'home_page') {
       Navigator.pushReplacement(

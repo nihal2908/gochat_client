@@ -1,13 +1,13 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/features/auth/api/auth_api.dart';
+import 'package:whatsapp_clone/features/auth/presentation/pages/login_page.dart';
 import 'package:whatsapp_clone/features/auth/presentation/widgets/auth_button.dart';
 import 'package:whatsapp_clone/features/auth/presentation/widgets/text_input_field.dart';
 import 'package:whatsapp_clone/features/splash/splash_page.dart';
-import 'package:whatsapp_clone/statics/static_widgets.dart';
+import 'package:whatsapp_clone/utils/utils.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({Key? key}) : super(key: key);
@@ -22,7 +22,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   void _signup() async {
-    Statics.showLoadingMessage(message: "Loading...", context: context);
+    showLoadingMessage(message: "Loading...", context: context);
 
     final response = await AuthApi.register(
       password: _passwordController.text,
@@ -48,7 +48,7 @@ class _SignupPageState extends State<SignupPage> {
       );
     } else {
       Navigator.pop(context);
-      Statics.showTextSnackBar(context: context, text: response.message);
+      showTextSnackBar(context: context, text: response.message);
     }
   }
 
@@ -86,6 +86,18 @@ class _SignupPageState extends State<SignupPage> {
             AuthButton(
               text: 'Sign Up',
               onPressed: _signup,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              },
+              child: const Text("Already have an account? Login"),
             ),
           ],
         ),

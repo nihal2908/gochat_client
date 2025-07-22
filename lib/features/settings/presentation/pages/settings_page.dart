@@ -9,7 +9,7 @@ import 'package:whatsapp_clone/features/settings/presentation/pages/notification
 import 'package:whatsapp_clone/features/settings/presentation/pages/privacy_settings_page.dart';
 import 'package:whatsapp_clone/features/settings/presentation/pages/storage_setting_page.dart';
 import 'package:whatsapp_clone/features/splash/splash_page.dart';
-import 'package:whatsapp_clone/statics/static_widgets.dart';
+import 'package:whatsapp_clone/utils/utils.dart';
 
 import '../../../../common/theme.dart';
 import '../widgets/settings_tile.dart';
@@ -143,7 +143,7 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _logout(BuildContext context) async {
-    Statics.showLoadingMessage(
+    showLoadingMessage(
       message: 'Signing you out...',
       context: context,
     );
@@ -163,7 +163,7 @@ class SettingsPage extends StatelessWidget {
       );
     } else {
       Navigator.pop(context);
-      Statics.showTextSnackBar(context: context, text: response.message);
+      showTextSnackBar(context: context, text: response.message);
     }
   }
 }
