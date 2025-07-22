@@ -52,24 +52,6 @@ GoChat is a modern real-time chat application built with Flutter. It provides se
    flutter run
    ```
 
-## 📁 Project Structure
-
-```
-lib/
-│
-├── models/         # Data models
-├── screens/        # UI screens
-├── services/       # Firebase, WebSocket, WebRTC, etc.
-├── widgets/        # Reusable UI widgets
-├── db/             # Local database helpers
-└── main.dart       # Entry point
-```
-
-## 🔒 Security
-
-- End-to-end encryption (planned)
-- Token-based authentication
-
 ## 📌 Roadmap
 
 - [x] Real-time WebSocket chat
