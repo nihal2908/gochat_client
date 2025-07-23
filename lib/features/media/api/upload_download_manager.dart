@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:whatsapp_clone/secrets/secrets.dart';
 
 class UploadDownloadManager {
   static final UploadDownloadManager _instance =
@@ -8,7 +9,7 @@ class UploadDownloadManager {
   factory UploadDownloadManager() => _instance;
   UploadDownloadManager._internal();
 
-  final String fileserverUrl = "https://falcon-sweet-physically.ngrok-free.app";
+  final String fileserverUrl = Secrets.fileserverUrl;
 
   final Map<String, bool> _uploadingMessages = {};
   final Map<String, StreamController<double>> _uploadProgressStreams = {};

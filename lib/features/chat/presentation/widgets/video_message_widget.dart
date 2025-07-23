@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
-import 'package:whatsapp_clone/features/media/api/file_uploader.dart';
+import 'package:whatsapp_clone/features/media/api/upload_download_manager.dart';
 import 'package:whatsapp_clone/models/media.dart';
 import 'package:whatsapp_clone/models/message.dart';
 

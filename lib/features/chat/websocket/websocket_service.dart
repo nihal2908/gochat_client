@@ -12,6 +12,8 @@ class WebSocketService {
   final DBHelper _dbHelper = DBHelper();
   final _localNotifications = FlutterLocalNotificationsPlugin();
   bool _isReconnecting = false;
+  bool _isConnected = false;
+
   late final WebRTCHandler webrtcHandler;
 
   static WebSocketService? _instance;
@@ -27,11 +29,16 @@ class WebSocketService {
   WebSocketChannel get channel => _channel;
 
   void connect() {
+    // If already connected, return early
+    if (_isConnected) {
+      return;
+    }
     _channel = WebSocketChannel.connect(
       Uri.parse(
         '${Secrets.websocketUrl}/ws?userId=$userId',
       ),
     );
+    _isConnected = true;
     _listenToEvents();
     _sendPendingMessages();
   }
@@ -92,49 +99,49 @@ class WebSocketService {
         if (kDebugMode) {
           print('WebSocket connection closed.');
         }
-        _reconnect(); // Attempt to reconnect
+        _isConnected = false;
+        // _reconnect(); // Attempt to reconnect
       },
       onError: (error) {
         if (kDebugMode) {
           print('WebSocket error: $error');
         }
-        _reconnect(); // Attempt to reconnect
+        _isConnected = false;
+        // _reconnect(); // Attempt to reconnect
       },
     );
   }
 
-  // Reconnect to WebSocket
   void _reconnect() {
-    if (_isReconnecting) return; // Prevent multiple reconnection attempts
+    if (_isReconnecting) return;
     _isReconnecting = true;
 
-    Future.delayed(const Duration(seconds: 5), () {
-      if (kDebugMode) {
-        print('Attempting to reconnect...');
-      }
-      try {
-        connect();
-        _isReconnecting = false; // Reset flag on successful connection
+    Future.delayed(
+      const Duration(seconds: 5),
+      () {
         if (kDebugMode) {
-          print('Reconnected successfully.');
+          print('Attempting to reconnect...');
         }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Reconnection failed: $e');
+        try {
+          connect();
+          _isReconnecting = false; // Reset flag on successful connection
+          if (kDebugMode) {
+            print('Reconnected successfully.');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Reconnection failed: $e');
+          }
+          _isReconnecting = false; // Reset flag on failure, to allow retry
+          _reconnect(); // Retry reconnection
         }
-        _isReconnecting = false; // Reset flag on failure, to allow retry
-        _reconnect(); // Retry reconnection
-      }
-    });
+      },
+    );
   }
 
   void setWebRTCHandler(WebRTCHandler handler) {
     webrtcHandler = handler;
   }
-
-  // Future<void> sendToWebSocket(Map<String, dynamic> data) async {
-  //   _channel.sink.add(jsonEncode(data));
-  // }
 
   Future<void> _handleMessageReceived(Map<String, dynamic> data) async {
     await _dbHelper.insertMessage(data, false);
@@ -145,59 +152,143 @@ class WebSocketService {
     final String? groupId = data['group_id'];
 
     String? notificationTitle, notificationBody;
+    String? targetId; // For grouping
 
     if (groupId != null) {
       final group = await _dbHelper.getGroupById(groupId);
       if (group != null) {
+        targetId = groupId;
         notificationTitle = group['title'];
         notificationBody =
             data['type'] == 'text' ? data['content'] : 'Click to view message!';
       }
-    }
-
-    if (chatId != null) {
-      // Step 3a: Check if chat exists
+    } else if (chatId != null) {
       final user = await _dbHelper.getUserById(senderId);
-
       if (user != null) {
+        targetId = chatId;
         notificationTitle = user['title'];
         notificationBody = data['type'] == 'text'
             ? data['content']
-            : data['caption'] != null
-                ? data['caption'] as String
-                : 'Click to view message!';
+            : data['caption'] ?? 'Click to view message!';
       }
     }
 
-    if (notificationTitle != null && notificationBody != null) {
-      // show notification
-      await _localNotifications.show(
-        0,
-        notificationTitle,
-        notificationBody,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'high_importance_channel',
-            'High Importance Notifications',
-            channelDescription:
-                'This channel is used for important notifications.',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        // payload: message.data.toString(),
+    // Show grouped notification
+    if (notificationTitle != null &&
+        notificationBody != null &&
+        targetId != null) {
+      await showGroupedNotification(
+        chatId: targetId,
+        messageId: data['_id'],
+        title: notificationTitle,
+        body: notificationBody,
       );
     }
-
-    // Step 4: Notify UI about changes
-    // _dbHelper.notifyChanges();
   }
+
+  Future<void> showGroupedNotification({
+    required String chatId,
+    required String messageId,
+    required String title,
+    required String body,
+  }) async {
+    final int notificationId = messageId.hashCode;
+    final int groupKeyHash = chatId.hashCode;
+
+    await _localNotifications.show(
+      notificationId,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          channelDescription: 'Used for important notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          groupKey: groupKeyHash.toString(), // String group key
+        ),
+      ),
+    );
+
+    // Group summary (optional, shown on Android)
+    await _localNotifications.show(
+      groupKeyHash,
+      title,
+      'New messages',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          channelDescription: 'Used for grouped notifications',
+          styleInformation: const DefaultStyleInformation(true, true),
+          groupKey: groupKeyHash.toString(),
+          setAsGroupSummary: true,
+        ),
+      ),
+    );
+  }
+
+  // Future<void> _handleMessageReceived(Map<String, dynamic> data) async {
+  //   await _dbHelper.insertMessage(data, false);
+  //   _sendAck(data, 'ack_delivered');
+
+  //   final String senderId = data['sender_id'];
+  //   final String? chatId = data['chat_id'];
+  //   final String? groupId = data['group_id'];
+
+  //   String? notificationTitle, notificationBody;
+
+  //   if (groupId != null) {
+  //     final group = await _dbHelper.getGroupById(groupId);
+  //     if (group != null) {
+  //       notificationTitle = group['title'];
+  //       notificationBody =
+  //           data['type'] == 'text' ? data['content'] : 'Click to view message!';
+  //     }
+  //   }
+
+  //   if (chatId != null) {
+  //     // Step 3a: Check if chat exists
+  //     final user = await _dbHelper.getUserById(senderId);
+
+  //     if (user != null) {
+  //       notificationTitle = user['title'];
+  //       notificationBody = data['type'] == 'text'
+  //           ? data['content']
+  //           : data['caption'] != null
+  //               ? data['caption'] as String
+  //               : 'Click to view message!';
+  //     }
+  //   }
+
+  //   if (notificationTitle != null && notificationBody != null) {
+  //     // show notification
+  //     await _localNotifications.show(
+  //       0,
+  //       notificationTitle,
+  //       notificationBody,
+  //       const NotificationDetails(
+  //         android: AndroidNotificationDetails(
+  //           'high_importance_channel',
+  //           'High Importance Notifications',
+  //           channelDescription:
+  //               'This channel is used for important notifications.',
+  //           importance: Importance.high,
+  //           priority: Priority.high,
+  //           icon: '@mipmap/ic_launcher',
+  //         ),
+  //         iOS: DarwinNotificationDetails(
+  //           presentAlert: true,
+  //           presentBadge: true,
+  //           presentSound: true,
+  //         ),
+  //       ),
+  //     );
+  //   }
+
+  // }
 
   Future<void> _handleMessageAck(
     Map<String, dynamic> data,
