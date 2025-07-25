@@ -7,14 +7,14 @@ import 'package:whatsapp_clone/secrets/secrets.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (message.data['type'] == 'wake') {
+  if (message.data['signal'] == 'wake') {
     await ensureSocketConnected();
   }
 }
 
 Future<void> ensureSocketConnected() async {
-  final webSocketService = WebSocketProvider().webSocketService;
-  webSocketService.connect();
+  WebSocketProvider().initialize(CurrentUser.userId!);
+  // webSocketService.connect();
 }
 
 class NotificationService {
@@ -51,19 +51,19 @@ class NotificationService {
 
   Future<void> _setupMessageHandlers() async {
     FirebaseMessaging.onMessage.listen((message) {
-      if (message.data['type'] == 'wake') {
+      if (message.data['signal'] == 'wake') {
         ensureSocketConnected();
       }
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      if (message.data['type'] == 'wake') {
+      if (message.data['signal'] == 'wake') {
         ensureSocketConnected();
       }
     });
 
     final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage?.data['type'] == 'wake') {
+    if (initialMessage?.data['signal'] == 'wake') {
       ensureSocketConnected();
     }
   }
