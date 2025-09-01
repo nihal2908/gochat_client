@@ -100,14 +100,14 @@ class WebSocketService {
           print('WebSocket connection closed.');
         }
         _isConnected = false;
-        // _reconnect(); // Attempt to reconnect
+        _reconnect(); // Attempt to reconnect
       },
       onError: (error) {
         if (kDebugMode) {
           print('WebSocket error: $error');
         }
         _isConnected = false;
-        // _reconnect(); // Attempt to reconnect
+        _reconnect(); // Attempt to reconnect
       },
     );
   }

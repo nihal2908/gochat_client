@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
@@ -13,6 +14,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> ensureSocketConnected() async {
+  final _localNotifications = FlutterLocalNotificationsPlugin();
+
+  await _localNotifications.show(
+    0,
+    "title",
+    "body",
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        'high_importance_channel',
+        'High Importance Notifications',
+        channelDescription: 'Used for important notifications',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      ),
+    ),
+  );
   WebSocketProvider().initialize(CurrentUser.userId!);
   // webSocketService.connect();
 }
