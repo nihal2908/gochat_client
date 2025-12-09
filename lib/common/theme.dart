@@ -39,12 +39,12 @@ class WhatsAppTheme {
         fontWeight: FontWeight.bold,
       ),
     ),
-    tabBarTheme: const TabBarTheme(
-      labelColor: white,
-      unselectedLabelColor: Color(0xFFB3D9D2),
-      indicatorSize: TabBarIndicatorSize.tab,
-      labelStyle: TextStyle(fontWeight: FontWeight.bold),
-    ),
+    // tabBarTheme: const TabBarTheme(
+    //   labelColor: white,
+    //   unselectedLabelColor: Color(0xFFB3D9D2),
+    //   indicatorSize: TabBarIndicatorSize.tab,
+    //   labelStyle: TextStyle(fontWeight: FontWeight.bold),
+    // ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: lightGreen,
       foregroundColor: white,
@@ -105,12 +105,12 @@ class WhatsAppTheme {
         fontWeight: FontWeight.bold,
       ),
     ),
-    tabBarTheme: const TabBarTheme(
-      labelColor: lightGreen,
-      unselectedLabelColor: grey,
-      indicatorSize: TabBarIndicatorSize.tab,
-      labelStyle: TextStyle(fontWeight: FontWeight.bold),
-    ),
+    // tabBarTheme: const TabBarTheme(
+    //   labelColor: lightGreen,
+    //   unselectedLabelColor: grey,
+    //   indicatorSize: TabBarIndicatorSize.tab,
+    //   labelStyle: TextStyle(fontWeight: FontWeight.bold),
+    // ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: lightGreen,
       foregroundColor: white,

@@ -189,9 +189,9 @@ class _ArchivedChatListState extends State<ArchivedChatList> {
             children: [
               CircleAvatar(
                 radius: 25,
-                foregroundImage: chat.ChatUser.ProfilePictureUrl!.isNotEmpty
+                foregroundImage: chat.ProfilePictureUrl!.isNotEmpty
                     ? CachedNetworkImageProvider(
-                        chat.ChatUser.ProfilePictureUrl!,
+                        chat.ProfilePictureUrl!,
                       )
                     : const AssetImage(Statics.defaultProfileImage)
                         as ImageProvider,
@@ -216,7 +216,7 @@ class _ArchivedChatListState extends State<ArchivedChatList> {
             ],
           ),
           title: Text(
-            chat.ChatUser.Title.toString(),
+            chat.Title.toString(),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           subtitle: lastMessage != null

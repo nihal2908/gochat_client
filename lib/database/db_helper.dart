@@ -12,6 +12,12 @@ import 'package:whatsapp_clone/models/group.dart';
 import 'package:whatsapp_clone/models/message.dart';
 import 'package:whatsapp_clone/secrets/secrets.dart';
 
+part 'package:whatsapp_clone/database/users/user_dao.dart';
+part 'package:whatsapp_clone/database/contacts/contact_dao.dart';
+part 'package:whatsapp_clone/database/status/status_dao.dart';
+part 'package:whatsapp_clone/database/chats/chat_dao.dart';
+part 'package:whatsapp_clone/database/messages/message_dao.dart';
+
 class DBHelper {
   static final DBHelper _instance = DBHelper._();
   static Database? _database;
@@ -259,7 +265,7 @@ class DBHelper {
             [
               chatId,
               sent ? receiverId : senderId,
-              1,
+              sent ? 0 : 1,
               0,
               DateTime.now().toIso8601String(),
             ],
@@ -659,35 +665,29 @@ class DBHelper {
     final whereClause = archived ? "WHERE Chat.is_archived = 1" : "";
 
     final queryResult = await db.rawQuery("""
-    SELECT 
-      Chat.*, 
-      COALESCE(Contact.name, User.title) AS title, 
-      User.name,
-      User.phone, 
-      User.country_code, 
-      User.profile_picture_url, 
-      User.status_message, 
-      User.last_seen, 
-      User.is_online, 
-      User.created_at, 
-      User.updated_at,
-      LastMessage.*
-    FROM Chat 
-    LEFT JOIN User ON Chat.user_id = User._id 
-    LEFT JOIN Contact ON Contact.user_id = User._id
-    LEFT JOIN (
-      SELECT 
-        Message.*
-      FROM Message
-      WHERE Message.timestamp IN (
-        SELECT MAX(timestamp)
-        FROM Message
-        GROUP BY chat_id
-      )
-    ) AS LastMessage ON Chat.id = LastMessage.chat_id
-    $whereClause
-    ORDER BY Chat.updated_at DESC;
-  """);
+      SELECT
+        Chat.id,
+        Chat.user_id,
+        COALESCE(Contact.name, User.title) AS title,
+        User.profile_picture_url,
+        LM.*,
+        Chat.unread_count,
+        Chat.is_archived
+      FROM Chat
+      LEFT JOIN User ON Chat.user_id = User._id
+      LEFT JOIN Contact ON Contact.phone = User.phone
+      LEFT JOIN (
+        SELECT m.*
+        FROM Message m
+        INNER JOIN (
+          SELECT chat_id, MAX(timestamp) AS max_ts
+          FROM Message
+          GROUP BY chat_id
+        ) mm ON m.chat_id = mm.chat_id AND m.timestamp = mm.max_ts
+      ) AS LM ON Chat.id = LM.chat_id
+      ${archived ? "WHERE Chat.is_archived = 1" : ""}
+      ORDER BY LM.timestamp DESC, Chat.updated_at DESC;
+    """);
 
     return queryResult.map((result) => Chat.fromMap(result)).toList();
   }

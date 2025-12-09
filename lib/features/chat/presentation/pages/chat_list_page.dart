@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
-import 'package:whatsapp_clone/features/chat/presentation/pages/archived_chat_list.dart';
 import 'package:whatsapp_clone/features/chat/presentation/pages/chat_room_page.dart';
 import 'package:whatsapp_clone/features/contact/contacts_page.dart';
 import 'package:whatsapp_clone/models/chat.dart';
@@ -165,36 +164,34 @@ class _ChatListPageState extends State<ChatListPage> {
     );
   }
 
-  Widget chatList({required List<Chat> chats}) {
-    bool hasArchivedChats = chats.any((chat) => chat.IsArchieved == 1);
+  void checkArchievedChats() {}
 
-    // Filter unarchived chats
-    final visibleChats = chats.where((chat) => chat.IsArchieved != 1).toList();
+  Widget chatList({required List<Chat> chats}) {
+    // bool hasArchivedChats = checkArchievedChats();
 
     // Add +1 to item count if archived tile is needed
     return ListView.builder(
-      itemCount: visibleChats.length + (hasArchivedChats ? 1 : 0),
+      itemCount: chats.length,
       itemBuilder: (context, index) {
-        if (hasArchivedChats && index == 0) {
-          // Insert "Archived Chats" tile at the top
-          return ListTile(
-            leading: Icon(Icons.archive),
-            title: Text("Archived Chats"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ArchivedChatList(
-                    dbHelper: _dbHelper,
-                  ),
-                ),
-              );
-            },
-          );
-        }
+        // if (hasArchivedChats && index == 0) {
+        //   // Insert "Archived Chats" tile at the top
+        //   return ListTile(
+        //     leading: Icon(Icons.archive),
+        //     title: Text("Archived Chats"),
+        //     onTap: () {
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //           builder: (context) => ArchivedChatList(
+        //             dbHelper: _dbHelper,
+        //           ),
+        //         ),
+        //       );
+        //     },
+        //   );
+        // }
 
-        final chatIndex = hasArchivedChats ? index - 1 : index;
-        final chat = visibleChats[chatIndex];
+        final chat = chats[index];
         final selected = isChatSelected(chat);
 
         return chatListItem(chat: chat, selected: selected);
@@ -229,9 +226,9 @@ class _ChatListPageState extends State<ChatListPage> {
             children: [
               CircleAvatar(
                 radius: 25,
-                foregroundImage: chat.ChatUser.ProfilePictureUrl!.isNotEmpty
+                foregroundImage: chat.ProfilePictureUrl!.isNotEmpty
                     ? CachedNetworkImageProvider(
-                        chat.ChatUser.ProfilePictureUrl!,
+                        chat.ProfilePictureUrl!,
                       )
                     : const AssetImage(Statics.defaultProfileImage)
                         as ImageProvider,
@@ -256,7 +253,7 @@ class _ChatListPageState extends State<ChatListPage> {
             ],
           ),
           title: Text(
-            chat.ChatUser.Title.toString(),
+            chat.Title.toString(),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           subtitle: lastMessage != null

@@ -28,7 +28,7 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   Future<void> fetchContacts() async {
-    if (refreshing) return;
+    // if (refreshing) return;
     refreshing = true;
     Provider.of<ContactProvider>(context, listen: false).refreshContacts();
   }
@@ -56,9 +56,9 @@ class _ContactsPageState extends State<ContactsPage> {
           body: FutureBuilder<List<Contact>>(
             future: _dbHelper.getContacts(),
             builder: (context, snapshot) {
-              // if (snapshot.connectionState == ConnectionState.waiting) {
-              //   return const Center(child: CircularProgressIndicator());
-              // }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
@@ -67,7 +67,7 @@ class _ContactsPageState extends State<ContactsPage> {
               final contacts = snapshot.data ?? [];
 
               if (contacts.isEmpty) {
-                return const Center(child: Text('No chats available.'));
+                return const Center(child: Text('No contacts available.'));
               }
 
               return ListView.builder(
