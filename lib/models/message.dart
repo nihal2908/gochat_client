@@ -16,6 +16,7 @@ class Message implements Comparable<Message> {
   int DeletedForEveryone;
   int Edited;
   DateTime Timestamp;
+  DateTime? ServerTS;
   Message({
     required this.Id,
     required this.SenderId,
@@ -30,6 +31,7 @@ class Message implements Comparable<Message> {
     required this.DeletedForEveryone,
     required this.Edited,
     required this.Timestamp,
+    this.ServerTS,
   });
 
   @override
@@ -62,6 +64,7 @@ class Message implements Comparable<Message> {
       'deleted_for_everyone': DeletedForEveryone,
       'edited': Edited,
       'timestamp': Timestamp.toIso8601String(),
+      'server_ts': ServerTS?.toIso8601String(),
     };
   }
 
@@ -81,6 +84,7 @@ class Message implements Comparable<Message> {
       DeletedForEveryone: map['deleted_for_everyone'] as int,
       Edited: map['edited'] != null ? map['edited'] as int : 0,
       Timestamp: DateTime.parse(map['timestamp']),
+      ServerTS: map['server_ts'] != null ? DateTime.parse(map['server_ts']) : null,
     );
   }
 

@@ -167,9 +167,8 @@ class WebSocketService {
       if (user != null) {
         targetId = chatId;
         notificationTitle = user['title'];
-        notificationBody = data['type'] == 'text'
-            ? data['content']
-            : data['caption'] ?? 'Click to view message!';
+        notificationBody =
+            data['type'] == 'text' ? data['content'] : 'Click to view message!';
       }
     }
 
@@ -298,7 +297,12 @@ class WebSocketService {
     final String? groupId = data['group_id'];
 
     // Update the message status in the database
-    await _dbHelper.updateMessageStatus(messageId, groupId, status);
+    if (status == 'sent') {
+      await _dbHelper.updateMessageServerTSandStatus(
+          messageId, groupId, status, data['server_ts']);
+    } else {
+      await _dbHelper.updateMessageStatus(messageId, groupId, status);
+    }
   }
 
   Future<void> _handleMessageReadAck(Map<String, dynamic> data) async {

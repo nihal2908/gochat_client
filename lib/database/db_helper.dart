@@ -457,6 +457,21 @@ class DBHelper {
     return rowsAffected;
   }
 
+  Future<int> updateMessageServerTSandStatus(String messageId, String? groupId, String status, String serverTS) async {
+    final db = await database;
+    final rowsAffected = await db.update(
+      'Message',
+      {
+        'status': status,
+        'server_ts': serverTS,
+      },
+      where: '_id = ?',
+      whereArgs: [messageId],
+    );
+    await notifyChanges();
+    return rowsAffected;
+  }
+
   Future<void> ackReadAllMessages(String chatId) async {
     final db = await database;
     await db.update(
@@ -599,11 +614,14 @@ class DBHelper {
 
   Future<List<Map<String, dynamic>>> getMessagesByChatId(String chatId) async {
     final db = await database;
-    return await db.query(
-      'Message',
-      where: 'chat_id = ? OR group_id = ?',
-      whereArgs: [chatId, chatId],
-      orderBy: 'timestamp DESC',
+    return await db.rawQuery(
+      '''
+      SELECT *
+      FROM Message
+      WHERE chat_id = $chatId OR group_id = $chatId'
+      ORDER BY CASE WHEN server_ts IS NULL THEN 1 ELSE 0 END, 
+      COALESCE(server_ts, timestamp) ASC;
+      '''
     );
   }
 
@@ -774,6 +792,7 @@ class DBHelper {
         size REAL,
         type TEXT,
         timestamp TEXT,
+        server_ts TEXT,
         status TEXT,
         edited INTEGER,
         deleted_for_everyone INTEGER,
