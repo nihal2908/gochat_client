@@ -30,10 +30,17 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
   late final DBHelper _dbHelper;
   late final WebSocketService _webSocketService;
 
+  late final Stream<double>? _uploadStream;
+  late final Stream<double>? _downloadStream;
+
   @override
   void initState() {
     _dbHelper = widget.dbHelper;
     _webSocketService = widget.webSocketService;
+    _uploadStream =
+        UploadDownloadManager().getUploadProgressStream(widget.message.Id);
+    _downloadStream =
+        UploadDownloadManager().getDownloadProgressStream(widget.message.Id);
     loadMedia();
     super.initState();
   }
@@ -45,7 +52,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
             await _dbHelper.loadMediaMessage(widget.message.Id);
         final bool? uploading =
             UploadDownloadManager().uploadingMessages[widget.message.Id];
-
+        if (!mounted) return;
         if (uploading != null && uploading) {
           setState(() {
             isUploading = true;
@@ -60,6 +67,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
         final Map<String, dynamic>? media =
             await _dbHelper.loadMediaMessage(widget.message.Id);
         if (media == null) return;
+        if (!mounted) return;
         setState(() {
           mediaMessage = Media.fromMap(media);
         });
@@ -68,6 +76,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
       final bool? downloading =
           UploadDownloadManager().downloadingMessages[widget.message.Id];
       if (downloading != null && downloading) {
+        if (!mounted) return;
         setState(() {
           isDownloading = true;
         });
@@ -75,6 +84,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
         final Map<String, dynamic>? media =
             await _dbHelper.loadMediaMessage(widget.message.Id);
         if (media == null) return;
+        if (!mounted) return;
         setState(() {
           mediaMessage = Media.fromMap(media);
         });
@@ -104,8 +114,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
                   child: Stack(
                     children: [
                       StreamBuilder<double>(
-                          stream: UploadDownloadManager()
-                              .getUploadProgressStream(widget.message.Id),
+                          stream: _uploadStream,
                           builder: (context, snapshot) {
                             if (!snapshot.hasData || snapshot.data == 1.0) {
                               return CircularProgressIndicator(
@@ -182,8 +191,7 @@ class _ImageMessageWidgetState extends State<ImageMessageWidget> {
             child: Stack(
               children: [
                 StreamBuilder<double>(
-                  stream: UploadDownloadManager()
-                      .getDownloadProgressStream(widget.message.Id),
+                  stream: _downloadStream,
                   builder: (context, snapshot) {
                     double progress = snapshot.data ?? 0;
                     return CircularProgressIndicator(

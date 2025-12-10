@@ -457,7 +457,8 @@ class DBHelper {
     return rowsAffected;
   }
 
-  Future<int> updateMessageServerTSandStatus(String messageId, String? groupId, String status, String serverTS) async {
+  Future<int> updateMessageServerTSandStatus(
+      String messageId, String? groupId, String status, String serverTS) async {
     final db = await database;
     final rowsAffected = await db.update(
       'Message',
@@ -618,10 +619,11 @@ class DBHelper {
       '''
       SELECT *
       FROM Message
-      WHERE chat_id = $chatId OR group_id = $chatId'
-      ORDER BY CASE WHEN server_ts IS NULL THEN 1 ELSE 0 END, 
-      COALESCE(server_ts, timestamp) ASC;
-      '''
+      WHERE chat_id = ? OR group_id = ?
+      ORDER BY CASE WHEN server_ts IS NULL THEN 0 ELSE 1 END, 
+      COALESCE(server_ts, timestamp) DESC;
+      ''',
+      [chatId, chatId],
     );
   }
 
