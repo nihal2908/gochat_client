@@ -1,16 +1,16 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, non_constant_identifier_names
 import 'dart:convert';
 
+import 'package:whatsapp_clone/models/contact.dart';
+
 class SendingContact {
   final String Id;
   final String Name;
   final String Phone;
-  final String CountryCode;
   SendingContact({
     required this.Id,
     required this.Name,
     required this.Phone,
-    required this.CountryCode,
   });
 
   Map<String, dynamic> toMap() {
@@ -18,7 +18,6 @@ class SendingContact {
       'id': Id,
       'name': Name,
       'phone': Phone,
-      'country_code': CountryCode,
     };
   }
 
@@ -27,11 +26,19 @@ class SendingContact {
       Id: map['id'] as String,
       Name: map['name'] as String,
       Phone: map['phone'] as String,
-      CountryCode: map['country_code'] as String,
+    );
+  }
+
+  factory SendingContact.fromContact(Contact contact) {
+    return SendingContact(
+      Id: contact.UserId,
+      Name: contact.ContactUser.Title,
+      Phone: contact.Phone,
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory SendingContact.fromJson(String source) => SendingContact.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory SendingContact.fromJson(String source) =>
+      SendingContact.fromMap(json.decode(source) as Map<String, dynamic>);
 }

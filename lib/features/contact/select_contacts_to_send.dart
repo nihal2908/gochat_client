@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
-import 'package:whatsapp_clone/features/group/pages/new_group_details.dart';
+// import 'package:whatsapp_clone/features/group/pages/new_group_details.dart';
 import 'package:whatsapp_clone/models/contact.dart';
-import 'package:whatsapp_clone/models/sending_contact.dart';
+// import 'package:whatsapp_clone/models/sending_contact.dart';
 import 'package:whatsapp_clone/utils/utils.dart';
 
 class SelectContactsToSend extends StatefulWidget {
@@ -15,7 +15,7 @@ class SelectContactsToSend extends StatefulWidget {
 class _SelectContactsToSendState extends State<SelectContactsToSend> {
   bool search = false;
   TextInputType keyBoardType = TextInputType.text;
-  final List<SendingContact> selectedContacts = [];
+  final List<Contact> selectedContacts = [];
   late final DBHelper _dbHelper;
 
   @override
@@ -61,10 +61,8 @@ class _SelectContactsToSendState extends State<SelectContactsToSend> {
             )
           : AppBar(
               title: ListTile(
-                title: const Text('New Group'),
-                subtitle: selectedContacts.isEmpty
-                    ? const Text('Add members')
-                    : Text("${selectedContacts.length} contacts selected"),
+                title: const Text('Contacts to send'),
+                subtitle: Text("${selectedContacts.length} selected"),
               ),
               actions: [
                 IconButton(
@@ -94,14 +92,14 @@ class _SelectContactsToSendState extends State<SelectContactsToSend> {
                         height: 70,
                         child: Column(
                           children: [
-                            // CircleAvatar(
-                            //   radius: 25,
-                            //   child: Text(contact.ContactUser.Title[0]),
-                            // ),
-                            // Text(
-                            //   contact.ContactUser.Title,
-                            //   overflow: TextOverflow.ellipsis,
-                            // )
+                            CircleAvatar(
+                              radius: 25,
+                              child: Text(contact.ContactUser.Title[0]),
+                            ),
+                            Text(
+                              contact.ContactUser.Title,
+                              overflow: TextOverflow.ellipsis,
+                            )
                           ],
                         ),
                       ),
@@ -157,11 +155,11 @@ class _SelectContactsToSendState extends State<SelectContactsToSend> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       onTap: () {
-                        // setState(() {
-                        //   selected
-                        //       ? selectedContacts.remove(contact)
-                        //       : selectedContacts.add(contact);
-                        // });
+                        setState(() {
+                          selected
+                              ? selectedContacts.remove(contact)
+                              : selectedContacts.add(contact);
+                        });
                       },
                     );
                   },
@@ -174,18 +172,11 @@ class _SelectContactsToSendState extends State<SelectContactsToSend> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           if (selectedContacts.isNotEmpty) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => NewGroupDetails(
-                  members: [],
-                ),
-              ),
-            );
+            Navigator.pop(context, selectedContacts);
           } else {
             showTextSnackBar(
               context: context,
-              text: 'Select atleast 1 contact.',
+              text: 'Atleast 1 contact must be selected.',
             );
           }
         },

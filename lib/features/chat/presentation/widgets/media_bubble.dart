@@ -1,16 +1,17 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'dart:io';
+// import 'package:flutter/foundation.dart';
+// import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/audio_message_widget.dart';
+import 'package:whatsapp_clone/features/chat/presentation/widgets/contact_message_widget.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/image_message_widget.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
-import 'package:whatsapp_clone/models/media.dart';
+// import 'package:whatsapp_clone/models/media.dart';
 import 'package:whatsapp_clone/models/message.dart';
-import 'package:whatsapp_clone/secrets/secrets.dart';
+// import 'package:whatsapp_clone/secrets/secrets.dart';
 import 'package:whatsapp_clone/statics/static_widgets.dart';
 
 class MediaBubble extends StatefulWidget {
@@ -32,99 +33,100 @@ class MediaBubble extends StatefulWidget {
 
 class _MediaBubbleState extends State<MediaBubble> {
   late final DBHelper _dbHelper;
-  Media? mediaMessage;
-  bool _isDownloading = false;
-  final ValueNotifier<bool> _download = ValueNotifier(false);
-  late final HttpClientRequest? _downloadRequest;
+  // Media? mediaMessage;
+  // bool _isDownloading = false;
+  // final ValueNotifier<bool> _download = ValueNotifier(false);
+  // late final HttpClientRequest? _downloadRequest;
   late final WebSocketService _webSocketService;
+
   @override
   void initState() {
     _dbHelper = widget.dbHelper;
     _webSocketService = widget.webSocketService;
-    loadMedia();
+    // loadMedia();
     super.initState();
   }
 
-  void loadMedia() async {
-    final Map<String, dynamic>? media =
-        await _dbHelper.loadMediaMessage(widget.message.Id);
-    if (media == null) return;
-    setState(() {
-      mediaMessage = Media.fromMap(media);
-    });
-  }
+  // void loadMedia() async {
+  //   final Map<String, dynamic>? media =
+  //       await _dbHelper.loadMediaMessage(widget.message.Id);
+  //   if (media == null) return;
+  //   setState(() {
+  //     mediaMessage = Media.fromMap(media);
+  //   });
+  // }
 
-  void downloadImage() async {
-    if (_isDownloading) return;
+  // void downloadImage() async {
+  //   if (_isDownloading) return;
 
-    setState(() {
-      _isDownloading = true;
-      _download.value = true;
-    });
+  //   setState(() {
+  //     _isDownloading = true;
+  //     _download.value = true;
+  //   });
 
-    try {
-      var request = await HttpClient().getUrl(
-        Uri.parse(Secrets.serverUrl + widget.message.Content),
-      );
-      _downloadRequest = request;
-      var response = await request.close();
+  //   try {
+  //     var request = await HttpClient().getUrl(
+  //       Uri.parse(Secrets.serverUrl + widget.message.Content),
+  //     );
+  //     _downloadRequest = request;
+  //     var response = await request.close();
 
-      if (response.statusCode == 200) {
-        final directory = await getApplicationDocumentsDirectory();
-        final savePath =
-            '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+  //     if (response.statusCode == 200) {
+  //       final directory = await getApplicationDocumentsDirectory();
+  //       final savePath =
+  //           '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-        File file = File(savePath);
-        List<int> bytes = [];
+  //       File file = File(savePath);
+  //       List<int> bytes = [];
 
-        await for (var chunk in response) {
-          bytes.addAll(chunk);
-          if (!_download.value) {
-            if (kDebugMode) {
-              print('Download cancelled!');
-            }
-            return;
-          }
-        }
+  //       await for (var chunk in response) {
+  //         bytes.addAll(chunk);
+  //         if (!_download.value) {
+  //           if (kDebugMode) {
+  //             print('Download cancelled!');
+  //           }
+  //           return;
+  //         }
+  //       }
 
-        await file.writeAsBytes(bytes);
-        await _dbHelper.updateMediaMessage(
-          widget.message,
-          savePath,
-        );
+  //       await file.writeAsBytes(bytes);
+  //       await _dbHelper.updateMediaMessage(
+  //         widget.message,
+  //         savePath,
+  //       );
 
-        loadMedia();
+  //       loadMedia();
 
-        setState(() {
-          _isDownloading = false;
-        });
-      } else {
-        if (kDebugMode) {
-          print('Failed to download file!');
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error downloading file: $e'),
-        ),
-      );
-    } finally {
-      setState(() {
-        _isDownloading = false;
-        _download.value = false;
-      });
-    }
-  }
+  //       setState(() {
+  //         _isDownloading = false;
+  //       });
+  //     } else {
+  //       if (kDebugMode) {
+  //         print('Failed to download file!');
+  //       }
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Error downloading file: $e'),
+  //       ),
+  //     );
+  //   } finally {
+  //     setState(() {
+  //       _isDownloading = false;
+  //       _download.value = false;
+  //     });
+  //   }
+  // }
 
-  void pauseDownload() {
-    if (!_isDownloading) return;
-    setState(() {
-      _isDownloading = false;
-      _download.value = false;
-      _downloadRequest?.abort();
-    });
-  }
+  // void pauseDownload() {
+  //   if (!_isDownloading) return;
+  //   setState(() {
+  //     _isDownloading = false;
+  //     _download.value = false;
+  //     _downloadRequest?.abort();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +208,26 @@ class _MediaBubbleState extends State<MediaBubble> {
           borderRadius: BorderRadius.circular(8),
           color: Colors.grey,
         ),
-        child: buildVideoMedia(),
+        child: Text('Video'),
+      );
+    }
+    if (widget.message.Type == 'document') {
+      return Row(
+        children: [
+          Icon(
+            Icons.insert_drive_file,
+            size: 20,
+          ),
+          const SizedBox(
+            width: 4,
+          ),
+          Text(
+            'Document',
+            style: TextStyle(
+              fontSize: 16,
+            ),
+          ),
+        ],
       );
     }
     if (widget.message.Type == 'audio') {
@@ -236,52 +257,39 @@ class _MediaBubbleState extends State<MediaBubble> {
         ],
       );
     }
-    if (widget.message.Type == 'document') {
-      return Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file,
-            size: 20,
-          ),
-          const SizedBox(
-            width: 4,
-          ),
-          Text(
-            'Document',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
-        ],
+    if (widget.message.Type == 'contact') {
+      return ContactMessageWidget(
+        message: widget.message,
+        isMe: widget.isMe,
       );
     }
     return Container();
   }
 
-  Widget buildVideoMedia() {
-    if (widget.message.Status == 'uploading') {
-      return Center(
-        child: CircularProgressIndicator(),
-      );
-    } else if (mediaMessage == null) {
-      return Center(
-        child: _isDownloading
-            ? IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.close),
-              )
-            : IconButton(
-                icon: Icon(Icons.download),
-                onPressed: downloadVideo,
-              ),
-      );
-    } else {
-      return Image.file(
-        File(mediaMessage!.Path),
-        fit: BoxFit.cover,
-      );
-    }
-  }
+  // Widget buildVideoMedia() {
+  //   if (widget.message.Status == 'uploading') {
+  //     return Center(
+  //       child: CircularProgressIndicator(),
+  //     );
+  //   } else if (mediaMessage == null) {
+  //     return Center(
+  //       child: _isDownloading
+  //           ? IconButton(
+  //               onPressed: () {},
+  //               icon: Icon(Icons.close),
+  //             )
+  //           : IconButton(
+  //               icon: Icon(Icons.download),
+  //               onPressed: downloadVideo,
+  //             ),
+  //     );
+  //   } else {
+  //     return Image.file(
+  //       File(mediaMessage!.Path),
+  //       fit: BoxFit.cover,
+  //     );
+  //   }
+  // }
 
-  void downloadVideo() {}
+  // void downloadVideo() {}
 }

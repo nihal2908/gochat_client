@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:file_picker/file_picker.dart';
@@ -17,6 +18,7 @@ import 'package:whatsapp_clone/features/chat/provider/chat_provider.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
 import 'package:whatsapp_clone/features/contact/select_contacts_to_send.dart';
 import 'package:whatsapp_clone/features/media/media_preview_page.dart';
+import 'package:whatsapp_clone/models/contact.dart';
 import 'package:whatsapp_clone/models/message.dart';
 import 'package:whatsapp_clone/models/sending_contact.dart';
 import 'package:whatsapp_clone/models/user.dart';
@@ -189,7 +191,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
-  void _sendMessage(String content) {
+  void _sendTextMessage(String content) {
     final message = {
       '_id': const Uuid().v4(),
       'sender_id': CurrentUser.userId,
@@ -584,13 +586,32 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void selectContacts() async {
-    List<SendingContact> contacts = await Navigator.push(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SelectContactsToSend(),
       ),
-    );
-    print(contacts.toString());
+    ).then((result) {
+      if (result == null) return;
+      final List<Contact> selectedContacts = result;
+      final String contactsToSend = jsonEncode(selectedContacts
+          .map((contact) => SendingContact.fromContact(contact).toJson())
+          .toList());
+
+      final message = {
+        '_id': const Uuid().v4(),
+        'sender_id': CurrentUser.userId,
+        'receiver_id': widget.userId,
+        'chat_id': widget.chatId,
+        'content': contactsToSend,
+        'size': 0,
+        'type': 'contact',
+        'status': 'pending',
+        'timestamp': DateTime.now().toIso8601String(),
+        'deleted_for_everyone': 0,
+      };
+      _webSocketService.sendMessage(message);
+    });
   }
 
   Widget customTextfield() {
@@ -679,7 +700,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 if (_isTyping) {
                   final text = _controller.text.trim();
                   if (text.isNotEmpty) {
-                    _sendMessage(text);
+                    _sendTextMessage(text);
                     _controller.clear();
                     _handleInputChange('');
                   }
