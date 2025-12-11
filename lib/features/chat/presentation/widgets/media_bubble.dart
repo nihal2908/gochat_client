@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/audio_message_widget.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/contact_message_widget.dart';
+import 'package:whatsapp_clone/features/chat/presentation/widgets/document_message_widget.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/image_message_widget.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
 // import 'package:whatsapp_clone/models/media.dart';
@@ -130,11 +131,11 @@ class _MediaBubbleState extends State<MediaBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final double side = MediaQuery.of(context).size.width * 0.80;
+    final double side = MediaQuery.of(context).size.width * 0.70;
     return Align(
       alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: SizedBox(
-        height: side,
+        // height: side,
         width: side,
         child: Card(
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
@@ -189,7 +190,10 @@ class _MediaBubbleState extends State<MediaBubble> {
 
   Widget buildMediaBox() {
     if (widget.message.Type == 'image') {
+      final double side = MediaQuery.of(context).size.width * 0.60;
       return Container(
+        height: side,
+        // width: side,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.grey,
@@ -212,22 +216,11 @@ class _MediaBubbleState extends State<MediaBubble> {
       );
     }
     if (widget.message.Type == 'document') {
-      return Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file,
-            size: 20,
-          ),
-          const SizedBox(
-            width: 4,
-          ),
-          Text(
-            'Document',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
-        ],
+      return DocumentMessageWidget(
+        message: widget.message,
+        isMe: widget.isMe,
+        dbHelper: _dbHelper,
+        webSocketService: _webSocketService,
       );
     }
     if (widget.message.Type == 'audio') {

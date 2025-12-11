@@ -12,15 +12,14 @@ import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
 import 'package:whatsapp_clone/features/auth/presentation/pages/user_profile_page.dart';
 import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
 import 'package:whatsapp_clone/features/camera/camera_screen.dart';
+import 'package:whatsapp_clone/features/chat/presentation/pages/document_preview_page.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/deleted_message_bubble.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/media_bubble.dart';
 import 'package:whatsapp_clone/features/chat/provider/chat_provider.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
 import 'package:whatsapp_clone/features/contact/select_contacts_to_send.dart';
 import 'package:whatsapp_clone/features/media/media_preview_page.dart';
-import 'package:whatsapp_clone/models/contact.dart';
 import 'package:whatsapp_clone/models/message.dart';
-import 'package:whatsapp_clone/models/sending_contact.dart';
 import 'package:whatsapp_clone/models/user.dart';
 import 'package:whatsapp_clone/providers/websocket_provider.dart';
 import '../widgets/message_bubble.dart';
@@ -526,10 +525,44 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void pickFile(FileType fileType) async {
-    FilePickerResult? result = await _filePicker.pickFiles(type: fileType);
-    if (result != null) {
-      File file = File(result.files.single.path!);
-      print(file.path);
+    FilePickerResult? selections = await _filePicker.pickFiles(
+      type: fileType,
+      allowMultiple: true,
+    );
+    if (selections != null) {
+      List<File> files = selections.files.map((selection) {
+        print(selection.path);
+        return File(selection.path!);
+      }).toList();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DocumentPreviewPage(files: files),
+        ),
+      ).then(
+        (result) async {
+          List<Map<String, dynamic>> files = result;
+          for (final file in files) {
+            final message = {
+              '_id': const Uuid().v4(),
+              'sender_id': CurrentUser.userId,
+              'receiver_id': widget.userId,
+              'chat_id': widget.chatId,
+              'content': file['path'],
+              'caption': file['caption'],
+              'size': file['size'],
+              'type': 'document',
+              'status': 'uploading',
+              'timestamp': DateTime.now().toIso8601String(),
+              'deleted_for_everyone': 0,
+            };
+            await _dbHelper.insertMediaMessage(
+              message,
+              file['path'],
+            );
+          }
+        },
+      );
     }
   }
 
@@ -546,7 +579,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       if (result == null) {
         return;
       } else {
-        // print(result.toString());
         //pahle content me local path dal do bad me upload ke bad jo url return ho wo dal denge fir send message
         final message = {
           '_id': const Uuid().v4(),
@@ -568,19 +600,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           message,
           result['path'],
         );
-
-        // final String? url = await _uploadMedia(result['path'], result['type']);
-        // if (url != null) {
-        //   message['content'] = url;
-        //   message['status'] = 'pending';
-        //   await _dbHelper.updateMediaMessage(
-        //     Message.fromMap(message),
-        //     result['path'],
-        //   );
-        //   _webSocketService.sendMessage(message);
-        // } else {
-        //   return;
-        // }
       }
     });
   }
@@ -593,10 +612,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       ),
     ).then((result) {
       if (result == null) return;
-      final List<Contact> selectedContacts = result;
-      final String contactsToSend = jsonEncode(selectedContacts
-          .map((contact) => SendingContact.fromContact(contact).toJson())
-          .toList());
+      final String contactsToSend = jsonEncode(result);
 
       final message = {
         '_id': const Uuid().v4(),

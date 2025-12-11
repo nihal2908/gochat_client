@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
-// import 'package:whatsapp_clone/features/group/pages/new_group_details.dart';
 import 'package:whatsapp_clone/models/contact.dart';
-// import 'package:whatsapp_clone/models/sending_contact.dart';
+import 'package:whatsapp_clone/models/sending_contact.dart';
 import 'package:whatsapp_clone/utils/utils.dart';
 
 class SelectContactsToSend extends StatefulWidget {
@@ -172,7 +171,8 @@ class _SelectContactsToSendState extends State<SelectContactsToSend> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           if (selectedContacts.isNotEmpty) {
-            Navigator.pop(context, selectedContacts);
+            final List<SendingContact> result = selectedContacts.map((contact) => SendingContact.fromContact(contact)).toList();
+            Navigator.pop(context, result);
           } else {
             showTextSnackBar(
               context: context,
