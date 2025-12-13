@@ -1,12 +1,19 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:whatsapp_clone/models/user.dart';
 
 class VideoResultPage extends StatefulWidget {
   final File file;
+  final User receiver;
+  final String caption;
 
-  const VideoResultPage({super.key, required this.file});
+  const VideoResultPage({
+    super.key,
+    required this.file,
+    required this.receiver,
+    required this.caption,
+  });
 
   @override
   State<VideoResultPage> createState() => _VideoResultPageState();
@@ -14,6 +21,7 @@ class VideoResultPage extends StatefulWidget {
 
 class _VideoResultPageState extends State<VideoResultPage> {
   late final VideoPlayerController _videoPlayerController;
+  final TextEditingController _captionController = TextEditingController();
 
   @override
   void initState() {
@@ -21,6 +29,7 @@ class _VideoResultPageState extends State<VideoResultPage> {
       ..initialize().then((_) {
         setState(() {});
       });
+    _captionController.text = widget.caption;
     super.initState();
   }
 
@@ -64,80 +73,104 @@ class _VideoResultPageState extends State<VideoResultPage> {
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        child: Stack(
+        child: Column(
           children: [
-            SizedBox(
-              height: MediaQuery.of(context).size.height - 150,
-              width: MediaQuery.of(context).size.width,
-              child: _videoPlayerController.value.isInitialized
-                  ? AspectRatio(
-                      aspectRatio: _videoPlayerController.value.aspectRatio,
-                      child: VideoPlayer(_videoPlayerController),
-                    )
-                  : Container(),
-            ),
-            Positioned(
-              bottom: 0,
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
-                child: TextFormField(
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
+            Expanded(
+              child: Stack(
+                children: [
+                  SizedBox(
+                    // height: MediaQuery.of(context).size.height - 159,
+                    width: MediaQuery.of(context).size.width,
+                    child: _videoPlayerController.value.isInitialized
+                        ? AspectRatio(
+                            aspectRatio:
+                                _videoPlayerController.value.aspectRatio,
+                            child: VideoPlayer(_videoPlayerController),
+                          )
+                        : Container(),
                   ),
-                  maxLines: 5,
-                  minLines: 1,
-                  keyboardType: TextInputType.multiline,
-                  decoration: InputDecoration(
-                    hintText: 'Add caption...',
-                    hintStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.add_photo_alternate,
-                      color: Colors.white,
-                      size: 27,
-                    ),
-                    suffixIcon: CircleAvatar(
-                      radius: 27,
-                      backgroundColor: Colors.teal,
-                      child: Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 27,
+                  Align(
+                    alignment: Alignment.center,
+                    child: CircleAvatar(
+                      radius: 33,
+                      backgroundColor: Colors.black38,
+                      child: InkWell(
+                        onTap: () {
+                          _videoPlayerController.value.isPlaying
+                              ? _videoPlayerController.pause()
+                              : _videoPlayerController.play();
+                        },
+                        child: Icon(
+                          _videoPlayerController.value.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 50,
+                        ),
                       ),
                     ),
-                    border: InputBorder.none,
-                  ),
-                ),
+                  )
+                ],
               ),
             ),
-            Align(
-              alignment: Alignment.center,
-              child: CircleAvatar(
-                radius: 33,
-                backgroundColor: Colors.black38,
-                child: InkWell(
-                  onTap: () {
-                    _videoPlayerController.value.isPlaying
-                        ? _videoPlayerController.pause()
-                        : _videoPlayerController.play();
-                  },
-                  child: Icon(
-                    _videoPlayerController.value.isPlaying
-                        ? Icons.pause
-                        : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4,
               ),
-            )
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      margin: EdgeInsets.only(left: 2, right: 2, bottom: 8),
+                      child: TextField(
+                        controller: _captionController,
+                        keyboardType: TextInputType.multiline,
+                        textAlign: TextAlign.center,
+                        maxLines: 5,
+                        minLines: 1,
+                        decoration: InputDecoration(
+                          hintText: 'Add caption...',
+                          contentPadding: EdgeInsets.all(5),
+                          border: InputBorder.none,
+                          prefixIcon: IconButton(
+                            icon: Icon(Icons.emoji_emotions),
+                            onPressed: () {},
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.teal,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.send,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        final result = {};
+                        Navigator.pop(context, result);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    _videoPlayerController.dispose();
+    super.dispose();
   }
 }

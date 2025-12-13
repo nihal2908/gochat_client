@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:whatsapp_clone/features/image/camera_result.dart';
+import 'package:whatsapp_clone/features/image/image_result_page.dart';
 import 'package:whatsapp_clone/features/video/video_result_page.dart';
 import 'package:whatsapp_clone/models/user.dart';
 
 class CameraScreen extends StatefulWidget {
-  final List<User> sentToUsers;
+  final User receiver;
   final String caption;
   const CameraScreen({
     super.key,
-    required this.sentToUsers,
     required this.caption,
+    required this.receiver,
   });
 
   static late final List<CameraDescription> cameras;
@@ -159,9 +159,9 @@ class _CameraScreenState extends State<CameraScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CameraResult(
+        builder: (context) => ImageResultPage(
           file: File(xfile.path),
-          receivers: widget.sentToUsers,
+          receiver: widget.receiver,
           caption: widget.caption,
         ),
       ),
@@ -194,9 +194,19 @@ class _CameraScreenState extends State<CameraScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => VideoResultPage(file: File(xfile.path)),
+        builder: (context) => VideoResultPage(
+          file: File(xfile.path),
+          receiver: widget.receiver,
+          caption: widget.caption,
+        ),
       ),
-    );
+    ).then((result) {
+      if (result == null) {
+        _cameraController.resumePreview();
+      } else {
+        Navigator.pop(context, result);
+      }
+    });
   }
 
   @override

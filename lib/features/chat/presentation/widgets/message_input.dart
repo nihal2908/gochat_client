@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 
 class MessageInput extends StatefulWidget {
-  final Function(String) onSend;
-  final Function(bool) onTyping;
+  final TextEditingController controller;
+  final Function(String) onSendClicked;
+  final Function(bool)? onTyping;
+  final Function() onMicClicked;
+  final Function() getMediaFromCamera;
+  final Function() buildFileAttachments;
+  final FocusNode focusNode;
+  final ValueNotifier showEmojiPicker;
 
-  const MessageInput({Key? key, required this.onSend, required this.onTyping})
-      : super(key: key);
+  const MessageInput({
+    Key? key,
+    required this.onSendClicked,
+    required this.controller,
+    required this.onTyping,
+    required this.onMicClicked,
+    required this.getMediaFromCamera,
+    required this.buildFileAttachments,
+    required this.focusNode,
+    required this.showEmojiPicker,
+  }) : super(key: key);
 
   @override
   _MessageInputState createState() => _MessageInputState();
 }
 
 class _MessageInputState extends State<MessageInput> {
-  final TextEditingController _controller = TextEditingController();
   bool _isTyping = false;
 
   void _handleInputChange(String text) {
@@ -20,12 +34,12 @@ class _MessageInputState extends State<MessageInput> {
       setState(() {
         _isTyping = true;
       });
-      widget.onTyping(true);
+      widget.onTyping ?? (true);
     } else if (text.isEmpty && _isTyping) {
       setState(() {
         _isTyping = false;
       });
-      widget.onTyping(false);
+      widget.onTyping ?? (false);
     }
   }
 
@@ -33,7 +47,7 @@ class _MessageInputState extends State<MessageInput> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 8.0,
+        horizontal: 8,
         vertical: 4,
       ),
       child: Row(
@@ -43,11 +57,13 @@ class _MessageInputState extends State<MessageInput> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
-              margin: EdgeInsets.only(left: 2, right: 2, bottom: 8),
+              margin: EdgeInsets.only(left: 2, right: 2, bottom: 4),
               child: TextField(
-                controller: _controller,
+                focusNode: widget.focusNode,
+                controller: widget.controller,
                 keyboardType: TextInputType.multiline,
-                textAlign: TextAlign.center,
+                textAlignVertical: TextAlignVertical.center,
+                textCapitalization: TextCapitalization.sentences,
                 maxLines: 5,
                 minLines: 1,
                 decoration: InputDecoration(
@@ -55,24 +71,45 @@ class _MessageInputState extends State<MessageInput> {
                   contentPadding: EdgeInsets.all(5),
                   border: InputBorder.none,
                   prefixIcon: IconButton(
-                    icon: Icon(Icons.emoji_emotions),
-                    onPressed: () {},
+                    icon: Icon(
+                      widget.showEmojiPicker.value
+                          ? Icons.keyboard
+                          : Icons.emoji_emotions,
+                    ),
+                    onPressed: () {
+                      if (widget.showEmojiPicker.value) {
+                        widget.focusNode.requestFocus();
+                      } else {
+                        widget.focusNode.unfocus();
+                        widget.focusNode.canRequestFocus = false;
+                      }
+                      setState(() {
+                        widget.showEmojiPicker.value =
+                            !widget.showEmojiPicker.value;
+                      });
+                    },
                   ),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          widget.buildFileAttachments();
+                        },
                         icon: Icon(
                           Icons.attach_file,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(
-                          Icons.camera_alt,
-                        ),
-                      ),
+                      _isTyping
+                          ? Container()
+                          : IconButton(
+                              onPressed: () {
+                                widget.getMediaFromCamera();
+                              },
+                              icon: Icon(
+                                Icons.camera_alt,
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -81,7 +118,7 @@ class _MessageInputState extends State<MessageInput> {
             ),
           ),
           CircleAvatar(
-            radius: 25,
+            radius: 24,
             backgroundColor: Colors.teal,
             child: IconButton(
               icon: Icon(
@@ -89,11 +126,11 @@ class _MessageInputState extends State<MessageInput> {
                 color: Colors.white,
               ),
               onPressed: () {
-                final text = _controller.text.trim();
-                if (text.isNotEmpty) {
-                  widget.onSend(text);
-                  _controller.clear();
+                if (_isTyping) {
+                  widget.onSendClicked(widget.controller.text.trim());
                   _handleInputChange('');
+                } else {
+                  widget.onMicClicked();
                 }
               },
             ),

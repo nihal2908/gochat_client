@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:whatsapp_clone/database/db_helper.dart';
 import 'package:whatsapp_clone/features/auth/current_user/user_manager.dart';
 import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
-import 'package:whatsapp_clone/features/camera/camera_page.dart';
 import 'package:whatsapp_clone/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:whatsapp_clone/features/group/pages/group_list_page.dart';
 import 'package:whatsapp_clone/features/home/widgets/popup_menu_widget.dart';
@@ -25,7 +24,6 @@ class _HomePageState extends State<HomePage> {
     const StatusPage(),
     const GroupListPage(),
     TestFunctionPage(),
-    CameraPage(),
   ];
   final PageController pageController = PageController(initialPage: 0);
   final ValueNotifier<int> currentPageIndex = ValueNotifier<int>(0);
@@ -179,11 +177,6 @@ class _HomePageState extends State<HomePage> {
                       icon: Icon(Icons.settings_outlined),
                       activeIcon: Icon(Icons.settings),
                       label: 'Testing',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.camera_alt_outlined),
-                      activeIcon: Icon(Icons.camera_alt),
-                      label: 'Camera',
                     ),
                   ],
                 );

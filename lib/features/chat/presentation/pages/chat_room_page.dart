@@ -13,8 +13,10 @@ import 'package:whatsapp_clone/features/auth/presentation/pages/user_profile_pag
 import 'package:whatsapp_clone/features/calls/webrtc_handler.dart';
 import 'package:whatsapp_clone/features/camera/camera_screen.dart';
 import 'package:whatsapp_clone/features/chat/presentation/pages/document_preview_page.dart';
+import 'package:whatsapp_clone/features/chat/presentation/widgets/attachment_tile_widget.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/deleted_message_bubble.dart';
 import 'package:whatsapp_clone/features/chat/presentation/widgets/media_bubble.dart';
+import 'package:whatsapp_clone/features/chat/presentation/widgets/message_input.dart';
 import 'package:whatsapp_clone/features/chat/provider/chat_provider.dart';
 import 'package:whatsapp_clone/features/chat/websocket/websocket_service.dart';
 import 'package:whatsapp_clone/features/contact/select_contacts_to_send.dart';
@@ -51,7 +53,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   bool hasDeletedMessage = false;
   double? previousPosition;
   late final User user;
-  bool showEmojiPicker = false;
+  // bool showEmojiPicker = false;
+  ValueNotifier<bool> showEmojiPicker = ValueNotifier(false);
   bool showFileAttachment = false;
   final FocusNode focusNode = FocusNode();
   final ImagePicker _picker = ImagePicker();
@@ -65,7 +68,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
         setState(() {
-          showEmojiPicker = false;
+          showEmojiPicker.value = false;
         });
       }
     });
@@ -91,9 +94,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget build(BuildContext context) {
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
-        if (showEmojiPicker) {
+        if (showEmojiPicker.value) {
           setState(() {
-            showEmojiPicker = false;
+            showEmojiPicker.value = false;
           });
         } else if (selectedMessages.isNotEmpty) {
           setState(() {
@@ -166,8 +169,24 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             body: Column(
               children: [
                 messageList(),
-                customTextfield(),
-                showEmojiPicker ? selectEmoji() : const SizedBox(),
+                MessageInput(
+                  controller: _controller,
+                  buildFileAttachments: buildFileAttachments,
+                  focusNode: focusNode,
+                  getMediaFromCamera: getMediaFromCamera,
+                  onMicClicked: () {
+                    print('Mic clicked');
+                  },
+                  onSendClicked: (content) {
+                    if (content.isNotEmpty) {
+                      _sendTextMessage(content);
+                      _controller.clear();
+                    }
+                  },
+                  onTyping: _onTyping,
+                  showEmojiPicker: showEmojiPicker,
+                ),
+                showEmojiPicker.value ? selectEmoji() : const SizedBox(),
               ],
             ),
           ),
@@ -175,12 +194,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       ),
     );
   }
-
-  // void _scrollToBottom() {
-  //   if (_scrollController.hasClients) {
-  //     _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-  //   }
-  // }
 
   void _markAllMessagesAsRead() {
     _webSocketService.sendReadAcknowledement(
@@ -386,19 +399,19 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
-  void _handleInputChange(String text) {
-    if (text.isNotEmpty && !_isTyping) {
-      setState(() {
-        _isTyping = true;
-      });
-      _onTyping(true);
-    } else if (text.isEmpty && _isTyping) {
-      setState(() {
-        _isTyping = false;
-      });
-      _onTyping(false);
-    }
-  }
+  // void _handleInputChange(String text) {
+  //   if (text.isNotEmpty && !_isTyping) {
+  //     setState(() {
+  //       _isTyping = true;
+  //     });
+  //     _onTyping(true);
+  //   } else if (text.isEmpty && _isTyping) {
+  //     setState(() {
+  //       _isTyping = false;
+  //     });
+  //     _onTyping(false);
+  //   }
+  // }
 
   Widget selectEmoji() {
     return EmojiPicker(
@@ -428,81 +441,68 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  attachmentTile(
-                    Icons.image,
-                    'Gallery',
-                    Colors.blue,
-                    onTap: pickImage,
+                  AttachmentTileWidget(
+                    icon: Icons.image,
+                    title: 'Gallery',
+                    color: Colors.blue,
+                    onTap: () {
+                      Navigator.pop(context);
+                      pickImage();
+                    },
                   ),
-                  attachmentTile(
-                    Icons.camera_alt,
-                    'Camera',
-                    Colors.green,
-                    onTap: getMediaFromCamera,
+                  AttachmentTileWidget(
+                    icon: Icons.camera_alt,
+                    title: 'Camera',
+                    color: Colors.green,
+                    onTap: () {
+                      Navigator.pop(context);
+                      getMediaFromCamera();
+                    },
                   ),
-                  attachmentTile(
-                    Icons.insert_drive_file,
-                    'Document',
-                    Colors.orange,
-                    onTap: () => pickFile(FileType.any),
+                  AttachmentTileWidget(
+                    icon: Icons.insert_drive_file,
+                    title: 'Document',
+                    color: Colors.orange,
+                    onTap: () {
+                      Navigator.pop(context);
+                      pickFile(FileType.any);
+                    },
                   ),
                 ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  attachmentTile(
-                    Icons.contacts,
-                    'Contact',
-                    Colors.purple,
-                    onTap: selectContacts,
+                  AttachmentTileWidget(
+                    icon: Icons.contacts,
+                    title: 'Contact',
+                    color: Colors.purple,
+                    onTap: () {
+                      Navigator.pop(context);
+                      selectContacts();
+                    },
                   ),
-                  attachmentTile(
-                    Icons.location_on,
-                    'Location',
-                    Colors.red,
+                  AttachmentTileWidget(
+                    icon: Icons.location_on,
+                    title: 'Location',
+                    color: Colors.red,
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
                   ),
-                  attachmentTile(
-                    Icons.music_note,
-                    'Audio',
-                    Colors.pink,
-                    onTap: () => pickFile(FileType.audio),
+                  AttachmentTileWidget(
+                    icon: Icons.music_note,
+                    title: 'Audio',
+                    color: Colors.pink,
+                    onTap: () {
+                      Navigator.pop(context);
+                      pickFile(FileType.audio);
+                    },
                   ),
                 ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget attachmentTile(
-    IconData icon,
-    String title,
-    Color color, {
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: color,
-              child: Icon(
-                icon,
-                size: 29,
-              ),
-            ),
-            SizedBox(height: 5),
-            Text(title),
-          ],
         ),
       ),
     );
@@ -518,8 +518,32 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         MaterialPageRoute(
           builder: (context) => MediaPreviewPage(
             files: xfiles.map((file) => File(file.path)).toList(),
+            receiver: user,
           ),
         ),
+      ).then(
+        (result) async {
+          List<Map<String, dynamic>> medias = result;
+          for (final media in medias) {
+            final message = {
+              '_id': const Uuid().v4(),
+              'sender_id': CurrentUser.userId,
+              'receiver_id': widget.userId,
+              'chat_id': widget.chatId,
+              'content': media['path'],
+              'caption': media['caption'],
+              'size': media['size'],
+              'type': media['type'],
+              'status': 'uploading',
+              'timestamp': DateTime.now().toIso8601String(),
+              'deleted_for_everyone': 0,
+            };
+            await _dbHelper.insertMediaMessage(
+              message,
+              media['path'],
+            );
+          }
+        },
       );
     }
   }
@@ -531,7 +555,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
     if (selections != null) {
       List<File> files = selections.files.map((selection) {
-        print(selection.path);
         return File(selection.path!);
       }).toList();
       Navigator.push(
@@ -571,7 +594,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       context,
       MaterialPageRoute(
         builder: (context) => CameraScreen(
-          sentToUsers: [user],
+          receiver: user,
           caption: _controller.text,
         ),
       ),
@@ -604,7 +627,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     });
   }
 
-  void selectContacts() async {
+  void selectContacts() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -630,106 +653,104 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     });
   }
 
-  Widget customTextfield() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              margin: EdgeInsets.only(left: 2, right: 2, bottom: 4),
-              child: TextField(
-                focusNode: focusNode,
-                controller: _controller,
-                keyboardType: TextInputType.multiline,
-                textAlignVertical: TextAlignVertical.center,
-                textCapitalization: TextCapitalization.sentences,
-                maxLines: 5,
-                minLines: 1,
-                decoration: InputDecoration(
-                  hintText: 'Message...',
-                  contentPadding: EdgeInsets.all(5),
-                  border: InputBorder.none,
-                  prefixIcon: IconButton(
-                    icon: Icon(
-                      showEmojiPicker ? Icons.keyboard : Icons.emoji_emotions,
-                    ),
-                    onPressed: () {
-                      if (showEmojiPicker) {
-                        focusNode.requestFocus();
-                      } else {
-                        focusNode.unfocus();
-                        focusNode.canRequestFocus = false;
-                      }
-                      setState(() {
-                        showEmojiPicker = !showEmojiPicker;
-                      });
-                    },
-                  ),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          // setState(() {
-                          //   showFileAttachment =
-                          //       !showFileAttachment;
-                          // });
-                          buildFileAttachments();
-                        },
-                        icon: Icon(
-                          Icons.attach_file,
-                        ),
-                      ),
-                      _isTyping
-                          ? Container()
-                          : IconButton(
-                              onPressed: () {
-                                getMediaFromCamera();
-                              },
-                              icon: Icon(
-                                Icons.camera_alt,
-                              ),
-                            ),
-                    ],
-                  ),
-                ),
-                onChanged: _handleInputChange,
-              ),
-            ),
-          ),
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.teal,
-            child: IconButton(
-              icon: Icon(
-                _isTyping ? Icons.send : Icons.mic,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                if (_isTyping) {
-                  final text = _controller.text.trim();
-                  if (text.isNotEmpty) {
-                    _sendTextMessage(text);
-                    _controller.clear();
-                    _handleInputChange('');
-                  }
-                } else {
-                  print('mic clicked');
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget customTextfield() {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(
+  //       horizontal: 8,
+  //       vertical: 4,
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           child: Card(
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(25),
+  //             ),
+  //             margin: EdgeInsets.only(left: 2, right: 2, bottom: 4),
+  //             child: TextField(
+  //               focusNode: focusNode,
+  //               controller: _controller,
+  //               keyboardType: TextInputType.multiline,
+  //               textAlignVertical: TextAlignVertical.center,
+  //               textCapitalization: TextCapitalization.sentences,
+  //               maxLines: 5,
+  //               minLines: 1,
+  //               decoration: InputDecoration(
+  //                 hintText: 'Message...',
+  //                 contentPadding: EdgeInsets.all(5),
+  //                 border: InputBorder.none,
+  //                 prefixIcon: IconButton(
+  //                   icon: Icon(
+  //                     showEmojiPicker.value
+  //                         ? Icons.keyboard
+  //                         : Icons.emoji_emotions,
+  //                   ),
+  //                   onPressed: () {
+  //                     if (showEmojiPicker.value) {
+  //                       focusNode.requestFocus();
+  //                     } else {
+  //                       focusNode.unfocus();
+  //                       focusNode.canRequestFocus = false;
+  //                     }
+  //                     setState(() {
+  //                       showEmojiPicker.value = !showEmojiPicker.value;
+  //                     });
+  //                   },
+  //                 ),
+  //                 suffixIcon: Row(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     IconButton(
+  //                       onPressed: () {
+  //                         buildFileAttachments();
+  //                       },
+  //                       icon: Icon(
+  //                         Icons.attach_file,
+  //                       ),
+  //                     ),
+  //                     _isTyping
+  //                         ? Container()
+  //                         : IconButton(
+  //                             onPressed: () {
+  //                               getMediaFromCamera();
+  //                             },
+  //                             icon: Icon(
+  //                               Icons.camera_alt,
+  //                             ),
+  //                           ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               onChanged: _handleInputChange,
+  //             ),
+  //           ),
+  //         ),
+  //         CircleAvatar(
+  //           radius: 24,
+  //           backgroundColor: Colors.teal,
+  //           child: IconButton(
+  //             icon: Icon(
+  //               _isTyping ? Icons.send : Icons.mic,
+  //               color: Colors.white,
+  //             ),
+  //             onPressed: () {
+  //               if (_isTyping) {
+  //                 final text = _controller.text.trim();
+  //                 if (text.isNotEmpty) {
+  //                   _sendTextMessage(text);
+  //                   _controller.clear();
+  //                   _handleInputChange('');
+  //                 }
+  //               } else {
+  //                 print('mic clicked');
+  //               }
+  //             },
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget messageList() {
     return Expanded(

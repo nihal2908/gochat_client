@@ -28,6 +28,9 @@ class _GroupChatRoomPageState extends State<GroupChatRoomPage> {
   late final ChatState chatState;
   late final WebSocketService _webSocketService;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _messageController = TextEditingController();
+  final ValueNotifier<bool> showEmojiPicker = ValueNotifier(false);
+  final FocusNode focusNode = FocusNode();
 
   @override
   void initState() {
@@ -41,12 +44,6 @@ class _GroupChatRoomPageState extends State<GroupChatRoomPage> {
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   _scrollToBottom();
     // });
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    }
   }
 
   // void _markAllMessagesAsRead() {
@@ -169,7 +166,18 @@ class _GroupChatRoomPageState extends State<GroupChatRoomPage> {
                   );
                 }),
           ),
-          MessageInput(onSend: _sendMessage, onTyping: _onTyping),
+          MessageInput(
+            onSendClicked: _sendMessage,
+            onTyping: _onTyping,
+            controller: _messageController,
+            buildFileAttachments: () {},
+            focusNode: focusNode,
+            getMediaFromCamera: () {},
+            onMicClicked: () {
+              print('Mic clicked');
+            },
+            showEmojiPicker: showEmojiPicker,
+          ),
         ],
       ),
     );
